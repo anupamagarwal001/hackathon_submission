@@ -13,45 +13,46 @@ tags:
 
 # AMC Allocator Environment
 
-`amc_allocator_env` is a deterministic OpenEnv environment for the Scaler Meta PyTorch hackathon. It simulates an AMC-style allocator choosing portfolio weights across five Indian IT services stocks under three progressively harder tasks.
+`amc_allocator_env` is a deterministic OpenEnv environment for the Scaler Meta PyTorch Hackathon. It models a realistic AMC-style allocation problem: choosing portfolio weights across five Indian IT services stocks while balancing alpha capture, turnover, cash management, and drawdown control.
 
-The environment is submission-oriented:
+## Overview
 
-- real-world portfolio allocation instead of a toy game
-- typed OpenEnv `Action`, `Observation`, and extended `State`
-- three deterministic tasks with grader scores in `0.0–1.0`
-- root-level `inference.py` with `heuristic`, `random`, and `llm` policies
-- Docker and Hugging Face Space friendly layout
+- Real-world portfolio allocation, not a toy game
+- Typed OpenEnv `Action`, `Observation`, and extended `State`
+- Three deterministic tasks with fixed offline data
+- Deterministic graders returning scores in `0.0–1.0`
+- Root-level `inference.py` with `heuristic`, `random`, and `llm` policies
+- Ready for OpenEnv validation, Docker deployment, and Hugging Face Spaces
 
-## Tasks
+## Task Suite
 
-### 1. `signal_following`
+### `signal_following`
 - 30 decision steps
 - clean predictive signals
-- near-zero transaction cost
-- objective: exploit straightforward cross-sectional alpha
+- minimal transaction cost
+- objective: capture obvious cross-sectional alpha efficiently
 
-### 2. `noisy_market`
+### `noisy_market`
 - 45 decision steps
-- conflicting and partially misleading signals
+- mixed and partially misleading signals
 - high transaction cost
-- objective: avoid overtrading while still capturing alpha
+- objective: avoid overtrading while still extracting usable alpha
 
-### 3. `regime_shift`
+### `regime_shift`
 - 60 decision steps
-- delayed signals with defensive rotation during a hidden downturn
-- explicit drawdown penalty
-- objective: protect capital through the regime break, then re-risk selectively
+- latent market break with delayed signal usefulness
+- explicit drawdown pressure
+- objective: stay defensive through deterioration, then re-risk selectively
 
-## Action and Observation Spaces
+## Action, Observation, and State
 
-### Action: `PortfolioAction`
+### `PortfolioAction`
 - `target_weights: dict[str, float]`
 - `reason: str | None`
 
-Weights represent asset allocations only. Any unallocated weight becomes cash automatically. The environment clips negative weights to `0.0` and normalizes overweight portfolios back to `1.0`.
+Weights refer only to risky assets. Any leftover allocation remains in cash automatically. Negative values are clipped to `0.0`, and overweight portfolios are normalized back to a maximum invested weight of `1.0`.
 
-### Observation: `AllocatorObservation`
+### `AllocatorObservation`
 - `task_id`
 - `task_description`
 - `step_index`
@@ -65,13 +66,13 @@ Weights represent asset allocations only. Any unallocated weight becomes cash au
 - `risk_metrics`
 - OpenEnv-native `reward`, `done`, and `metadata`
 
-### State: `AllocatorState`
+### `AllocatorState`
 
-The state endpoint exposes episode bookkeeping such as NAV history, turnover history, realized returns, signal alignment, holdings, and the active task metadata.
+The state endpoint exposes episode bookkeeping including NAV history, turnover history, realized returns, signal alignment history, holdings, and active task metadata.
 
-## Reward Design
+## Reward and Grading
 
-Per-step reward is shaped, not just terminal:
+Per-step reward is shaped to reflect practical allocator behavior:
 
 ```text
 reward
@@ -79,77 +80,84 @@ reward
 + signal alignment bonus
 - transaction cost
 - variance proxy penalty
-- drawdown penalty (task dependent)
+- drawdown penalty
 ```
 
-This keeps the trajectory informative while still pushing the agent toward risk-adjusted performance.
+This keeps trajectories informative while rewarding risk-aware behavior instead of raw return chasing.
 
-## Graders
+Deterministic grading lives in [`graders.py`](./graders.py). Each episode is mapped into a bounded score in `0.0–1.0` using:
 
-Each task has a deterministic grader in [`graders.py`](/Users/anuagar/Desktop/dev/amc_allocator_env/graders.py). Every grader maps episode metrics into `0.0–1.0` using hard-coded thresholds.
-
-Metrics used:
 - total return
 - max drawdown
 - average turnover
 - signal alignment
 - positive reward step ratio
 
-## Local Setup
+## Baseline Performance
 
-Use Python 3.11 and the bundled `uv.lock`.
+Current deterministic heuristic benchmark:
 
-```bash
-cd /Users/anuagar/Desktop/dev/amc_allocator_env
-/Users/anuagar/Library/Python/3.11/bin/uv sync --python python3.11 --extra dev
+```text
+signal_following  score=0.603  return=9.317%
+noisy_market      score=0.436  return=4.071%
+regime_shift      score=0.954  return=17.845%
+aggregate_score   score=0.664
 ```
 
-## Run the Baseline Inference
+Expected behavior:
 
-Default mode is the reproducible heuristic baseline:
+- `heuristic` beats `random` on all three tasks
+- all scores remain in `0.0–1.0`
+- runtime stays comfortably below the hackathon limit
+
+## Running Locally
+
+Use Python 3.11 and the bundled lockfile.
 
 ```bash
-cd /Users/anuagar/Desktop/dev/amc_allocator_env
+uv sync --python python3.11 --extra dev
+```
+
+Run the deterministic heuristic baseline:
+
+```bash
 python3.11 inference.py --policy heuristic
 ```
 
-Compare deterministic baselines:
+Compare baselines:
 
 ```bash
 python3.11 inference.py --policy random
 python3.11 inference.py --policy heuristic
 ```
 
-Run all configured policies:
+Run all policies:
 
 ```bash
 python3.11 inference.py --policy all
 ```
 
-Run a single task:
+Run one task only:
 
 ```bash
 python3.11 inference.py --policy heuristic --task noisy_market
 ```
 
-Expected behavior:
-- `heuristic` should beat `random` on all three tasks
-- all task scores stay within `0.0–1.0`
-- runtime stays well under the hackathon’s 20 minute limit
+## LLM Policy
 
-## LLM Policy Configuration
-
-The `llm` policy uses the OpenAI Python client and accepts the dashboard’s mixed configuration conventions.
+The `llm` policy uses the OpenAI Python client and supports both direct OpenAI usage and OpenAI-compatible providers.
 
 Supported environment variables:
+
 - `MODEL_NAME`
 - `API_BASE_URL`
 - `HF_TOKEN`
 - `OPENAI_API_KEY`
 
 Resolution order:
+
 - auth token: `OPENAI_API_KEY`, otherwise `HF_TOKEN`
-- base URL: `API_BASE_URL` when set, otherwise default OpenAI endpoint
+- base URL: `API_BASE_URL` when set, otherwise the default OpenAI endpoint
 
 Example:
 
@@ -159,71 +167,46 @@ export OPENAI_API_KEY=...
 python3.11 inference.py --policy llm --task signal_following
 ```
 
-## Run the Server Locally
+## Server and Deployment
+
+Run the FastAPI environment locally:
 
 ```bash
-cd /Users/anuagar/Desktop/dev/amc_allocator_env
 AMC_TASK_ID=signal_following uvicorn server.app:app --host 0.0.0.0 --port 8000
 ```
 
 Available task ids:
+
 - `signal_following`
 - `noisy_market`
 - `regime_shift`
 
-## Docker
-
-Build:
+OpenEnv validation:
 
 ```bash
-cd /Users/anuagar/Desktop/dev/amc_allocator_env
-docker build -t amc_allocator_env:latest -f server/Dockerfile .
+openenv validate --verbose
+openenv build
+openenv validate --url http://localhost:8000
 ```
 
-Run:
+Docker paths:
 
-```bash
-docker run --rm -p 8000:8000 -e AMC_TASK_ID=signal_following amc_allocator_env:latest
-```
-
-## OpenEnv Validation
-
-```bash
-cd /Users/anuagar/Desktop/dev/amc_allocator_env
-PATH="/Users/anuagar/Library/Python/3.11/bin:$PATH" openenv validate --verbose
-PATH="/Users/anuagar/Library/Python/3.11/bin:$PATH" openenv build
-PATH="/Users/anuagar/Library/Python/3.11/bin:$PATH" openenv validate --url http://localhost:8000
-```
-
-## Hugging Face Space
-
-After local validation passes:
-
-```bash
-cd /Users/anuagar/Desktop/dev/amc_allocator_env
-PATH="/Users/anuagar/Library/Python/3.11/bin:$PATH" openenv push --repo-id <hf-user>/amc_allocator_env
-```
+- [`Dockerfile`](./Dockerfile): Hugging Face Space runtime
+- [`server/Dockerfile`](./server/Dockerfile): OpenEnv-oriented container build
 
 ## Project Layout
 
 ```text
 amc_allocator_env/
 ├── README.md
-├── __init__.py
-├── client.py
-├── data/
-│   ├── __init__.py
-│   └── market_scenarios.py
-├── graders.py
+├── Dockerfile
 ├── inference.py
-├── models.py
 ├── openenv.yaml
-├── policies.py
-├── pyproject.toml
-├── server/
-│   ├── amc_environment.py
-│   ├── app.py
-│   └── Dockerfile
 ├── tasks.py
+├── graders.py
+├── policies.py
+├── models.py
+├── data/
+├── server/
 └── tests/
 ```
