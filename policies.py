@@ -167,6 +167,4 @@ def build_policy(
     if normalized == "random":
         rng = random.Random(seed)
         return lambda observation: random_policy(observation, rng=rng)
-    if normalized == "llm":
-        return LLMAllocatorPolicy.from_environment()
     raise KeyError(f"Unknown policy {policy_name!r}")
