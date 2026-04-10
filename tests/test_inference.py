@@ -4,6 +4,8 @@ from importlib import reload
 
 import inference
 from inference import emit_structured_stdout, run_episode
+from policies import LLMAllocatorPolicy, heuristic_policy
+from server.amc_environment import AmcAllocatorEnvironment
 
 
 def test_scores_are_bounded_for_all_tasks() -> None:
@@ -72,3 +74,35 @@ def test_default_policy_falls_back_to_heuristic_without_api_key(monkeypatch) -> 
     monkeypatch.delenv("API_KEY", raising=False)
     reloaded = reload(inference)
     assert reloaded._resolve_policy_name(None) == "heuristic"
+
+
+def test_llm_policy_falls_back_to_heuristic_on_client_error() -> None:
+    class FailingCompletions:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def create(self, **_: object) -> object:
+            self.calls += 1
+            raise RuntimeError("proxy unavailable")
+
+    class FailingChat:
+        def __init__(self) -> None:
+            self.completions = FailingCompletions()
+
+    class FailingClient:
+        def __init__(self) -> None:
+            self.chat = FailingChat()
+
+    env = AmcAllocatorEnvironment(task_id="signal_following")
+    observation = env.reset(seed=7)
+    policy = LLMAllocatorPolicy(client=FailingClient(), model_name="test-model")
+
+    first_action = policy(observation)
+    expected = heuristic_policy(observation)
+    assert first_action.target_weights == expected.target_weights
+    assert "LLM fallback activated" in (first_action.reason or "")
+    assert policy.client.chat.completions.calls == 1
+
+    second_action = policy(observation)
+    assert second_action.target_weights == expected.target_weights
+    assert policy.client.chat.completions.calls == 1

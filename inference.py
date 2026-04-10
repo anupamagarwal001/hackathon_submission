@@ -75,7 +75,7 @@ def _build_runtime_policy(policy_name: str, seed: int = 7):
     if validator_api_key:
         client = OpenAI(
             api_key=validator_api_key,
-            base_url=os.environ["API_BASE_URL"],
+            base_url=os.getenv("API_BASE_URL", API_BASE_URL),
         )
         return LLMAllocatorPolicy(client=client, model_name=MODEL_NAME)
 

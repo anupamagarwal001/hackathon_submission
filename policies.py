@@ -98,8 +98,12 @@ class LLMAllocatorPolicy:
 
     client: OpenAI
     model_name: str
+    llm_available: bool = True
 
     def __call__(self, observation: AllocatorObservation) -> PortfolioAction:
+        if not self.llm_available:
+            return self._fallback_action(observation)
+
         prompt = (
             "You are allocating an AMC portfolio for one decision step.\n"
             f"Task: {observation.task_id} - {observation.task_description}\n"
@@ -113,28 +117,39 @@ class LLMAllocatorPolicy:
             '{"target_weights":{"INFY":0.2,"TCS":0.3},"reason":"short explanation"}.\n'
             "Constraints: no shorting, omit cash, total invested weight can be below 1.0."
         )
-        response = self.client.chat.completions.create(
-            model=self.model_name,
-            temperature=0.1,
-            response_format={"type": "json_object"},
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a portfolio allocation model. Return valid JSON only."
-                    ),
-                },
-                {"role": "user", "content": prompt},
-            ],
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                temperature=0.1,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a portfolio allocation model. Return valid JSON only."
+                        ),
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+            )
+            content = response.choices[0].message.content or "{}"
+            payload = _extract_json_object(content)
+            weights = payload.get("target_weights", {})
+            reason = payload.get("reason")
+            if not isinstance(weights, dict):
+                raise ValueError("LLM response target_weights must be an object")
+            cleaned = {str(asset).upper(): float(weight) for asset, weight in weights.items()}
+            return PortfolioAction(target_weights=cleaned, reason=reason)
+        except Exception:
+            self.llm_available = False
+            return self._fallback_action(observation)
+
+    def _fallback_action(self, observation: AllocatorObservation) -> PortfolioAction:
+        fallback = heuristic_policy(observation)
+        reason = fallback.reason or "Heuristic fallback."
+        return PortfolioAction(
+            target_weights=fallback.target_weights,
+            reason=f"{reason} LLM fallback activated.",
         )
-        content = response.choices[0].message.content or "{}"
-        payload = _extract_json_object(content)
-        weights = payload.get("target_weights", {})
-        reason = payload.get("reason")
-        if not isinstance(weights, dict):
-            raise ValueError("LLM response target_weights must be an object")
-        cleaned = {str(asset).upper(): float(weight) for asset, weight in weights.items()}
-        return PortfolioAction(target_weights=cleaned, reason=reason)
 
 
 def build_policy(
