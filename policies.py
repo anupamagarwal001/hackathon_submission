@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import random
 from dataclasses import dataclass
 from typing import Callable
@@ -99,23 +98,6 @@ class LLMAllocatorPolicy:
 
     client: OpenAI
     model_name: str
-
-    @classmethod
-    def from_environment(cls) -> "LLMAllocatorPolicy":
-        api_key = os.getenv("OPENAI_API_KEY") or os.getenv("HF_TOKEN")
-        model_name = os.getenv("MODEL_NAME")
-        base_url = os.getenv("API_BASE_URL")
-        if not model_name:
-            raise RuntimeError("MODEL_NAME must be set for --policy llm")
-        if not api_key:
-            raise RuntimeError(
-                "Set OPENAI_API_KEY or HF_TOKEN before running --policy llm"
-            )
-
-        client_kwargs = {"api_key": api_key}
-        if base_url:
-            client_kwargs["base_url"] = base_url
-        return cls(client=OpenAI(**client_kwargs), model_name=model_name)
 
     def __call__(self, observation: AllocatorObservation) -> PortfolioAction:
         prompt = (
