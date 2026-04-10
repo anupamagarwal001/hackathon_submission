@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from importlib import reload
+
+import inference
 from inference import emit_structured_stdout, run_episode
 
 
@@ -57,3 +60,15 @@ def test_run_episode_structured_events_match_expected_fields() -> None:
     assert list(events[1][1].keys()) == ["step", "reward"]
     assert events[-1][0] == "END"
     assert list(events[-1][1].keys()) == ["task", "score", "steps"]
+
+
+def test_default_policy_prefers_llm_when_api_key_present(monkeypatch) -> None:
+    monkeypatch.setenv("API_KEY", "test-key")
+    reloaded = reload(inference)
+    assert reloaded._resolve_policy_name(None) == "llm"
+
+
+def test_default_policy_falls_back_to_heuristic_without_api_key(monkeypatch) -> None:
+    monkeypatch.delenv("API_KEY", raising=False)
+    reloaded = reload(inference)
+    assert reloaded._resolve_policy_name(None) == "heuristic"

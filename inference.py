@@ -62,17 +62,37 @@ def emit_structured_stdout(marker: str, **payload: object) -> None:
     print(f"[{marker}] {ordered}".rstrip(), flush=True)
 
 
+def _validator_api_key() -> str | None:
+    return os.getenv("API_KEY")
+
+
 def _build_runtime_policy(policy_name: str, seed: int = 7):
     normalized = policy_name.lower()
     if normalized != "llm":
         return build_policy(normalized, seed=seed)
 
-    api_key = os.getenv("OPENAI_API_KEY") or HF_TOKEN
+    validator_api_key = _validator_api_key()
+    if validator_api_key:
+        client = OpenAI(
+            api_key=validator_api_key,
+            base_url=os.environ["API_BASE_URL"],
+        )
+        return LLMAllocatorPolicy(client=client, model_name=MODEL_NAME)
+
+    api_key = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
     if not api_key:
-        raise RuntimeError("Set HF_TOKEN or OPENAI_API_KEY before running --policy llm")
+        raise RuntimeError("Set API_KEY, HF_TOKEN, or OPENAI_API_KEY before running --policy llm")
 
     client = OpenAI(api_key=api_key, base_url=API_BASE_URL)
     return LLMAllocatorPolicy(client=client, model_name=MODEL_NAME)
+
+
+def _resolve_policy_name(requested_policy: str | None) -> str:
+    if requested_policy:
+        return requested_policy
+    if _validator_api_key():
+        return "llm"
+    return "heuristic"
 
 
 def run_episode(
@@ -169,9 +189,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run allocator baseline inference.")
     parser.add_argument(
         "--policy",
-        default="heuristic",
+        default=None,
         choices=["heuristic", "random", "llm", "all"],
-        help="Policy to evaluate. Default is heuristic for reproducible local runs.",
+        help="Policy to evaluate. Defaults to llm when API_KEY is injected, otherwise heuristic.",
     )
     parser.add_argument(
         "--task",
@@ -190,14 +210,15 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    selected_policy = _resolve_policy_name(args.policy)
     selected_tasks = TASK_ORDER if args.task == "all" else (args.task,)
     if args.json:
-        reports = run_benchmark(args.policy, tasks=selected_tasks, seed=args.seed)
+        reports = run_benchmark(selected_policy, tasks=selected_tasks, seed=args.seed)
         print(json.dumps([report.to_dict() for report in reports], indent=2))
         return
 
     reports = run_benchmark(
-        args.policy,
+        selected_policy,
         tasks=selected_tasks,
         seed=args.seed,
         event_callback=lambda marker, payload: emit_structured_stdout(marker, **payload),
