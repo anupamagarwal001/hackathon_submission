@@ -8,14 +8,22 @@ from policies import LLMAllocatorPolicy, heuristic_policy
 from server.amc_environment import AmcAllocatorEnvironment
 
 
+TASK_IDS = (
+    "guided_allocation",
+    "research_risk_conflict",
+    "regime_shift_recovery",
+    "mandate_drift",
+)
+
+
 def test_scores_are_bounded_for_all_tasks() -> None:
-    for task_id in ("signal_following", "noisy_market", "regime_shift"):
+    for task_id in TASK_IDS:
         report = run_episode(task_id, "heuristic", seed=7)
         assert 0.0 <= report.score <= 1.0
 
 
 def test_heuristic_beats_random_on_all_tasks() -> None:
-    for task_id in ("signal_following", "noisy_market", "regime_shift"):
+    for task_id in TASK_IDS:
         heuristic_report = run_episode(task_id, "heuristic", seed=7)
         random_report = run_episode(task_id, "random", seed=7)
         assert heuristic_report.score > random_report.score
@@ -25,7 +33,7 @@ def test_run_episode_emits_required_structured_events() -> None:
     events: list[tuple[str, dict[str, object]]] = []
 
     report = run_episode(
-        "signal_following",
+        "guided_allocation",
         "heuristic",
         seed=7,
         event_callback=lambda marker, payload: events.append((marker, payload)),
@@ -39,10 +47,10 @@ def test_run_episode_emits_required_structured_events() -> None:
 
 
 def test_emit_structured_stdout_uses_required_markers(capsys) -> None:
-    emit_structured_stdout("END", task="signal_following", score=0.95, steps=30)
+    emit_structured_stdout("END", task="guided_allocation", score=0.95, steps=30)
     output = capsys.readouterr().out.strip()
     assert output.startswith("[END] ")
-    assert "task=signal_following" in output
+    assert "task=guided_allocation" in output
     assert "score=0.950000" in output
     assert "steps=30" in output
 
@@ -51,13 +59,13 @@ def test_run_episode_structured_events_match_expected_fields() -> None:
     events: list[tuple[str, dict[str, object]]] = []
 
     run_episode(
-        "signal_following",
+        "guided_allocation",
         "heuristic",
         seed=7,
         event_callback=lambda marker, payload: events.append((marker, payload)),
     )
 
-    assert events[0] == ("START", {"task": "signal_following"})
+    assert events[0] == ("START", {"task": "guided_allocation"})
     assert events[1][0] == "STEP"
     assert list(events[1][1].keys()) == ["step", "reward"]
     assert events[-1][0] == "END"
@@ -93,16 +101,18 @@ def test_llm_policy_falls_back_to_heuristic_on_client_error() -> None:
         def __init__(self) -> None:
             self.chat = FailingChat()
 
-    env = AmcAllocatorEnvironment(task_id="signal_following")
+    env = AmcAllocatorEnvironment(task_id="guided_allocation")
     observation = env.reset(seed=7)
     policy = LLMAllocatorPolicy(client=FailingClient(), model_name="test-model")
 
     first_action = policy(observation)
     expected = heuristic_policy(observation)
+    assert first_action.action_type == expected.action_type
+    assert first_action.allocation_template == expected.allocation_template
     assert first_action.target_weights == expected.target_weights
     assert "LLM fallback activated" in (first_action.reason or "")
     assert policy.client.chat.completions.calls == 1
 
     second_action = policy(observation)
-    assert second_action.target_weights == expected.target_weights
+    assert second_action.action_type == expected.action_type
     assert policy.client.chat.completions.calls == 1

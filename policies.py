@@ -1,4 +1,4 @@
-"""Baseline policies for allocator evaluation."""
+"""Baseline policies for committee-style evaluation."""
 
 from __future__ import annotations
 
@@ -19,69 +19,113 @@ def _clamp(value: float, minimum: float = 0.0, maximum: float = 1.0) -> float:
     return max(minimum, min(maximum, value))
 
 
-def _normalize_weights(
-    scores: dict[str, float], cash_buffer: float = 0.0
-) -> dict[str, float]:
-    positive_scores = {asset: max(0.0, score) for asset, score in scores.items()}
-    total_score = sum(positive_scores.values())
-    if total_score <= 0.0:
-        return {}
-    investable = 1.0 - _clamp(cash_buffer, 0.0, 0.8)
-    return {
-        asset: investable * score / total_score
-        for asset, score in positive_scores.items()
-        if score > 0.0
-    }
-
-
 def heuristic_policy(observation: AllocatorObservation) -> PortfolioAction:
-    """Simple risk-aware signal following policy."""
+    """Committee-aware heuristic baseline for the Portfolio Manager."""
 
     market_signal = observation.risk_metrics.get("market_signal", 0.0)
-    dispersion = observation.risk_metrics.get("signal_dispersion", 0.0)
+    risk_pressure = observation.risk_metrics.get("risk_pressure", 0.0)
     drawdown = observation.risk_metrics.get("max_drawdown", 0.0)
-    base_cash_buffer = observation.risk_metrics.get("cash_buffer_hint", 0.05)
+    dispersion = observation.risk_metrics.get("signal_dispersion", 0.0)
+    min_cash = observation.active_constraints.get("min_cash_weight", 0.0)
 
-    scores = {}
-    for asset, signal in observation.signals.items():
-        current_weight = observation.current_weights.get(asset, 0.0)
-        score = max(0.0, signal) ** 1.6
-        if observation.task_id == "noisy_market":
-            score = 0.75 * score + 0.25 * current_weight
-        elif observation.task_id == "regime_shift":
-            score = 0.70 * score + 0.30 * current_weight
-        scores[asset] = score
+    if observation.queries_remaining > 0:
+        if observation.step_index == 0 and not observation.research_notes:
+            return PortfolioAction(
+                action_type="query_research",
+                query_target="SECTOR",
+                reason="Build initial analyst view before taking risk.",
+            )
+        if observation.outstanding_risk_alert and not observation.risk_notes:
+            return PortfolioAction(
+                action_type="query_risk",
+                reason="Need an explicit risk read before reallocating.",
+            )
+        if (
+            observation.task_id == "research_risk_conflict"
+            and observation.step_index in (0, 10, 24)
+            and len(observation.research_notes) <= 2
+        ):
+            return PortfolioAction(
+                action_type="query_research",
+                query_target="SECTOR",
+                reason="Refresh research view during conflict-heavy regime.",
+            )
 
-    if max(scores.values(), default=0.0) < 0.05 or market_signal < -0.18:
-        return PortfolioAction(target_weights={}, reason="Signals weak; stay defensive in cash.")
+    if market_signal < -0.16 or drawdown > 0.08:
+        return PortfolioAction(
+            action_type="move_to_cash",
+            reason="Preserve capital under deteriorating conditions.",
+        )
 
-    cash_buffer = base_cash_buffer
-    cash_buffer += max(0.0, -market_signal) * 0.25
-    cash_buffer += max(0.0, drawdown - 0.03) * 1.5
-    cash_buffer += max(0.0, 0.18 - dispersion) * 0.10
+    if observation.outstanding_risk_alert or risk_pressure > 0.58 or min_cash >= 0.15:
+        return PortfolioAction(
+            action_type="allocate",
+            allocation_template="defensive_quality",
+            reason="Shift into defensive quality allocation under elevated risk.",
+        )
 
-    weights = _normalize_weights(scores, cash_buffer=cash_buffer)
+    best_signal = max(observation.signals.values(), default=0.0)
+    if best_signal > 0.58 and dispersion > 0.18:
+        template = "top2_conviction"
+        if observation.active_constraints.get("max_single_asset_weight", 1.0) < 0.40:
+            template = "balanced_top3"
+        return PortfolioAction(
+            action_type="allocate",
+            allocation_template=template,
+            reason="Lean into the strongest cross-sectional opportunities.",
+        )
+
+    if observation.task_id == "mandate_drift" and min_cash >= 0.12:
+        return PortfolioAction(
+            action_type="allocate",
+            allocation_template="defensive_quality",
+            reason="Respect tighter mandate and preserve flexibility.",
+        )
+
+    if best_signal > 0.25 or market_signal > 0.04:
+        return PortfolioAction(
+            action_type="allocate",
+            allocation_template="balanced_top3",
+            reason="Express the current research and signal mix with balanced exposure.",
+        )
+
     return PortfolioAction(
-        target_weights=weights,
-        reason="Risk-aware heuristic allocation from positive signals.",
+        action_type="hold",
+        reason="No edge is strong enough to justify a fresh rebalance.",
     )
 
 
 def random_policy(
-    observation: AllocatorObservation, rng: random.Random | None = None
+    observation: AllocatorObservation,
+    rng: random.Random | None = None,
 ) -> PortfolioAction:
-    """Random baseline with explicit cash in the draw."""
+    """Random committee baseline."""
 
     generator = rng or random.Random()
-    sample_count = len(observation.signals) + 1
-    draws = [generator.random() for _ in range(sample_count)]
-    total = sum(draws) or 1.0
-    normalized = [value / total for value in draws]
-    weights = {
-        asset: normalized[index]
-        for index, asset in enumerate(observation.signals.keys())
-    }
-    return PortfolioAction(target_weights=weights, reason="Random baseline.")
+    action_pool = ["hold", "move_to_cash", "allocate"]
+    if observation.queries_remaining > 0:
+        action_pool.extend(["query_research", "query_risk"])
+
+    action_type = generator.choice(action_pool)
+    if action_type == "query_research":
+        query_target = generator.choice(["SECTOR", *observation.signals.keys()])
+        return PortfolioAction(
+            action_type="query_research",
+            query_target=query_target,
+            reason="Random research query.",
+        )
+    if action_type == "query_risk":
+        return PortfolioAction(action_type="query_risk", reason="Random risk query.")
+    if action_type == "move_to_cash":
+        return PortfolioAction(action_type="move_to_cash", reason="Random defensive shift.")
+    if action_type == "allocate":
+        template = generator.choice(list(observation.available_allocation_templates))
+        return PortfolioAction(
+            action_type="allocate",
+            allocation_template=template,
+            reason="Random allocation template.",
+        )
+    return PortfolioAction(action_type="hold", reason="Random hold.")
 
 
 def _extract_json_object(text: str) -> dict:
@@ -94,7 +138,7 @@ def _extract_json_object(text: str) -> dict:
 
 @dataclass
 class LLMAllocatorPolicy:
-    """LLM-backed policy using the OpenAI Python client."""
+    """LLM-backed Portfolio Manager policy using the OpenAI Python client."""
 
     client: OpenAI
     model_name: str
@@ -105,17 +149,26 @@ class LLMAllocatorPolicy:
             return self._fallback_action(observation)
 
         prompt = (
-            "You are allocating an AMC portfolio for one decision step.\n"
+            "You are the Portfolio Manager in a multi-agent investment committee.\n"
             f"Task: {observation.task_id} - {observation.task_description}\n"
             f"Step: {observation.step_index} / {observation.step_index + observation.steps_remaining}\n"
             f"Prices: {json.dumps(observation.prices, sort_keys=True)}\n"
             f"Signals: {json.dumps(observation.signals, sort_keys=True)}\n"
             f"Current weights: {json.dumps(observation.current_weights, sort_keys=True)}\n"
             f"Cash weight: {observation.cash_weight:.4f}\n"
+            f"Constraints: {json.dumps(observation.active_constraints, sort_keys=True)}\n"
             f"Risk metrics: {json.dumps(observation.risk_metrics, sort_keys=True)}\n"
-            "Respond with JSON only: "
-            '{"target_weights":{"INFY":0.2,"TCS":0.3},"reason":"short explanation"}.\n'
-            "Constraints: no shorting, omit cash, total invested weight can be below 1.0."
+            f"Recent research notes: {json.dumps(observation.research_notes)}\n"
+            f"Recent risk notes: {json.dumps(observation.risk_notes)}\n"
+            f"Templates: {json.dumps(observation.available_allocation_templates, sort_keys=True)}\n"
+            f"Queries remaining: {observation.queries_remaining}\n"
+            "Respond with JSON only. Valid examples:\n"
+            '{"action_type":"query_research","query_target":"SECTOR","reason":"need a fresh view"}\n'
+            '{"action_type":"query_risk","reason":"risk is elevated"}\n'
+            '{"action_type":"allocate","allocation_template":"balanced_top3","reason":"broad participation"}\n'
+            '{"action_type":"allocate","target_weights":{"INFY":0.3,"TCS":0.2},"reason":"custom allocation"}\n'
+            '{"action_type":"move_to_cash","reason":"preserve capital"}\n'
+            '{"action_type":"hold","reason":"wait for clarity"}'
         )
         try:
             response = self.client.chat.completions.create(
@@ -125,7 +178,7 @@ class LLMAllocatorPolicy:
                     {
                         "role": "system",
                         "content": (
-                            "You are a portfolio allocation model. Return valid JSON only."
+                            "You are an institutional Portfolio Manager. Return valid JSON only."
                         ),
                     },
                     {"role": "user", "content": prompt},
@@ -133,12 +186,13 @@ class LLMAllocatorPolicy:
             )
             content = response.choices[0].message.content or "{}"
             payload = _extract_json_object(content)
-            weights = payload.get("target_weights", {})
-            reason = payload.get("reason")
-            if not isinstance(weights, dict):
-                raise ValueError("LLM response target_weights must be an object")
-            cleaned = {str(asset).upper(): float(weight) for asset, weight in weights.items()}
-            return PortfolioAction(target_weights=cleaned, reason=reason)
+            return PortfolioAction(
+                action_type=str(payload.get("action_type", "hold")).lower(),
+                allocation_template=payload.get("allocation_template"),
+                query_target=payload.get("query_target"),
+                target_weights=payload.get("target_weights", {}),
+                reason=payload.get("reason"),
+            )
         except Exception:
             self.llm_available = False
             return self._fallback_action(observation)
@@ -147,6 +201,9 @@ class LLMAllocatorPolicy:
         fallback = heuristic_policy(observation)
         reason = fallback.reason or "Heuristic fallback."
         return PortfolioAction(
+            action_type=fallback.action_type,
+            allocation_template=fallback.allocation_template,
+            query_target=fallback.query_target,
             target_weights=fallback.target_weights,
             reason=f"{reason} LLM fallback activated.",
         )

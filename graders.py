@@ -1,4 +1,4 @@
-"""Deterministic graders for allocator episodes."""
+"""Deterministic graders for committee-style episodes."""
 
 from __future__ import annotations
 
@@ -27,9 +27,12 @@ class EpisodeMetrics:
     max_drawdown: float
     average_turnover: float
     signal_alignment: float
+    information_usage: float
+    risk_response: float
     positive_step_ratio: float
     volatility: float
     invested_ratio: float
+    compliance_score: float
     steps: int
 
     def to_dict(self) -> dict:
@@ -43,6 +46,8 @@ def compute_metrics(state) -> EpisodeMetrics:
     reward_history = list(state.reward_history)
     turnover_history = list(state.turnover_history)
     signal_alignment_history = list(state.signal_alignment_history)
+    info_usage_history = list(state.information_usage_history)
+    risk_response_history = list(state.risk_response_history)
     return_history = list(state.portfolio_return_history)
 
     final_nav = nav_history[-1] if nav_history else float(state.portfolio_value)
@@ -50,17 +55,18 @@ def compute_metrics(state) -> EpisodeMetrics:
     max_drawdown = float(state.risk_metrics.get("max_drawdown", 0.0))
     average_turnover = mean(turnover_history) if turnover_history else 0.0
     signal_alignment = mean(signal_alignment_history) if signal_alignment_history else 0.0
+    information_usage = mean(info_usage_history) if info_usage_history else 0.0
+    risk_response = mean(risk_response_history) if risk_response_history else 0.0
     positive_step_ratio = (
         sum(1 for value in reward_history if value > 0.0) / len(reward_history)
         if reward_history
         else 0.0
     )
     volatility = mean(abs(value) for value in return_history) if return_history else 0.0
-    invested_ratio = 1.0 - mean(
-        [1.0 - sum(weights.values()) for weights in [state.current_weights]]
-    )
-    if state.current_weights:
-        invested_ratio = 1.0 - float(state.cash_weight)
+    invested_ratio = 1.0 - float(state.cash_weight)
+    compliance_score = 1.0
+    if state.current_step:
+        compliance_score = _clamp(1.0 - (state.compliance_violations / state.current_step))
 
     return EpisodeMetrics(
         task_id=state.task_id,
@@ -70,44 +76,61 @@ def compute_metrics(state) -> EpisodeMetrics:
         max_drawdown=max_drawdown,
         average_turnover=average_turnover,
         signal_alignment=signal_alignment,
+        information_usage=information_usage,
+        risk_response=risk_response,
         positive_step_ratio=positive_step_ratio,
         volatility=volatility,
         invested_ratio=invested_ratio,
+        compliance_score=compliance_score,
         steps=state.current_step,
     )
 
 
-def score_signal_following(metrics: EpisodeMetrics) -> float:
+def score_guided_allocation(metrics: EpisodeMetrics) -> float:
     return _clamp(
-        0.50 * _normalize(metrics.total_return, 0.0, 0.12)
-        + 0.25 * _normalize(metrics.signal_alignment, 0.25, 0.75)
+        0.40 * _normalize(metrics.total_return, 0.0, 0.12)
+        + 0.20 * _normalize(metrics.information_usage, 0.05, 0.55)
         + 0.15 * _normalize(metrics.positive_step_ratio, 0.40, 0.80)
+        + 0.15 * _normalize(metrics.compliance_score, 0.70, 1.0)
         + 0.10 * _normalize(0.35 - metrics.average_turnover, 0.0, 0.35)
     )
 
 
-def score_noisy_market(metrics: EpisodeMetrics) -> float:
+def score_research_risk_conflict(metrics: EpisodeMetrics) -> float:
     return _clamp(
-        0.42 * _normalize(metrics.total_return, -0.01, 0.10)
-        + 0.25 * _normalize(0.18 - metrics.average_turnover, 0.0, 0.18)
-        + 0.18 * _normalize(0.10 - metrics.max_drawdown, 0.0, 0.10)
-        + 0.15 * _normalize(metrics.signal_alignment, 0.10, 0.55)
+        0.30 * _normalize(metrics.total_return, -0.01, 0.09)
+        + 0.25 * _normalize(metrics.compliance_score, 0.65, 1.0)
+        + 0.20 * _normalize(metrics.risk_response, 0.0, 0.18)
+        + 0.15 * _normalize(0.12 - metrics.max_drawdown, 0.0, 0.12)
+        + 0.10 * _normalize(metrics.information_usage, 0.0, 0.35)
     )
 
 
-def score_regime_shift(metrics: EpisodeMetrics) -> float:
+def score_regime_shift_recovery(metrics: EpisodeMetrics) -> float:
     return _clamp(
-        0.38 * _normalize(metrics.total_return, -0.02, 0.10)
-        + 0.27 * _normalize(0.12 - metrics.max_drawdown, 0.0, 0.12)
-        + 0.20 * _normalize(metrics.signal_alignment, 0.05, 0.45)
-        + 0.15 * _normalize(metrics.positive_step_ratio, 0.35, 0.70)
+        0.33 * _normalize(metrics.total_return, -0.01, 0.12)
+        + 0.27 * _normalize(metrics.risk_response, 0.0, 0.22)
+        + 0.20 * _normalize(0.15 - metrics.max_drawdown, 0.0, 0.15)
+        + 0.10 * _normalize(metrics.positive_step_ratio, 0.35, 0.75)
+        + 0.10 * _normalize(metrics.compliance_score, 0.70, 1.0)
+    )
+
+
+def score_mandate_drift(metrics: EpisodeMetrics) -> float:
+    return _clamp(
+        0.30 * _normalize(metrics.compliance_score, 0.60, 1.0)
+        + 0.25 * _normalize(0.12 - metrics.max_drawdown, 0.0, 0.12)
+        + 0.20 * _normalize(metrics.total_return, -0.01, 0.09)
+        + 0.15 * _normalize(metrics.information_usage, 0.0, 0.30)
+        + 0.10 * _normalize(0.30 - metrics.average_turnover, 0.0, 0.30)
     )
 
 
 TASK_GRADERS = {
-    "signal_following": score_signal_following,
-    "noisy_market": score_noisy_market,
-    "regime_shift": score_regime_shift,
+    "guided_allocation": score_guided_allocation,
+    "research_risk_conflict": score_research_risk_conflict,
+    "regime_shift_recovery": score_regime_shift_recovery,
+    "mandate_drift": score_mandate_drift,
 }
 
 
