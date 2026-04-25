@@ -24,6 +24,7 @@ tags:
 - Public GitHub mirror: [anupamagarwal001/hackathon_submission](https://github.com/anupamagarwal001/hackathon_submission)
 - Colab training notebook: [`training/committee_grpo_colab.ipynb`](./training/committee_grpo_colab.ipynb)
 - Mini-blog draft: [`docs/ROUND2_HF_MINI_BLOG_DRAFT.md`](./docs/ROUND2_HF_MINI_BLOG_DRAFT.md)
+- Short slide deck: [`docs/AI_Investment_Committee_Deck.pptx`](./docs/AI_Investment_Committee_Deck.pptx)
 - Pitch script: [`docs/ROUND2_PITCH_SCRIPT.md`](./docs/ROUND2_PITCH_SCRIPT.md)
 - Demo flow: [`docs/ROUND2_DEMO_FLOW.md`](./docs/ROUND2_DEMO_FLOW.md)
 - On-site checklist: [`docs/ROUND2_ONSITE_CHECKLIST.md`](./docs/ROUND2_ONSITE_CHECKLIST.md)
@@ -313,6 +314,7 @@ The runtime prefers the injected validator credentials when `API_KEY` is present
 Judge-facing support artifacts linked from this README:
 
 - mini-blog draft: [`docs/ROUND2_HF_MINI_BLOG_DRAFT.md`](./docs/ROUND2_HF_MINI_BLOG_DRAFT.md)
+- slide deck: [`docs/AI_Investment_Committee_Deck.pptx`](./docs/AI_Investment_Committee_Deck.pptx)
 - pitch and Q&A script: [`docs/ROUND2_PITCH_SCRIPT.md`](./docs/ROUND2_PITCH_SCRIPT.md)
 - on-site demo flow: [`docs/ROUND2_DEMO_FLOW.md`](./docs/ROUND2_DEMO_FLOW.md)
 - on-site execution checklist: [`docs/ROUND2_ONSITE_CHECKLIST.md`](./docs/ROUND2_ONSITE_CHECKLIST.md)
