@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import Any
 
 from huggingface_hub import HfApi, SpaceHardware, run_uv_job
+from huggingface_hub.errors import HfHubHTTPError, LocalTokenNotFoundError
 
 DEFAULT_REPO_URL = "https://github.com/anupamagarwal001/hackathon_submission.git"
 DEFAULT_NAMESPACE = "anupamagarwal001"
@@ -46,7 +48,51 @@ def _print_job(job) -> None:
     print(json.dumps(payload, indent=2))
 
 
+def _token_display(token: Any) -> str:
+    if isinstance(token, str):
+        return "provided-token"
+    if token is True:
+        return "local-login"
+    if token is False or token is None:
+        return "anonymous"
+    return str(token)
+
+
+def ensure_hf_auth(namespace: str, token: Any) -> None:
+    """Fail early with a clear message if the local machine is not logged in."""
+
+    api = HfApi()
+    try:
+        who = api.whoami(token=token)
+    except (HfHubHTTPError, LocalTokenNotFoundError) as exc:  # pragma: no cover
+        token_file_candidates = [
+            Path.home() / ".cache" / "huggingface" / "token",
+            Path.home() / ".huggingface" / "token",
+        ]
+        token_files = [str(path) for path in token_file_candidates if path.exists()]
+        raise RuntimeError(
+            "Hugging Face authentication is missing or invalid.\n"
+            f"- launcher auth mode: {_token_display(token)}\n"
+            f"- namespace: {namespace}\n"
+            f"- HF_TOKEN env present: {'yes' if os.getenv('HF_TOKEN') else 'no'}\n"
+            f"- saved token files: {token_files if token_files else 'none'}\n\n"
+            "Why this matters:\n"
+            "- run_uv_job() creates a private helper dataset repo in your HF namespace\n"
+            "  (for example `anupamagarwal001/hf-cli-jobs-uv-run-scripts`).\n"
+            "- that requires a valid logged-in token with write access.\n\n"
+            "Fix:\n"
+            "1. Run `hf auth login`\n"
+            "2. Paste a Hugging Face write token for your personal namespace\n"
+            "3. Verify with `hf auth whoami`\n"
+            "4. Re-run `python3 training/launch_hf_job.py launch`\n"
+        ) from exc
+
+    who_name = who.get("name") or who.get("fullname") or "unknown"
+    print(f"hf_auth_ok={who_name}", flush=True)
+
+
 def launch(args: argparse.Namespace) -> None:
+    ensure_hf_auth(args.namespace, args.token)
     script = Path(__file__).resolve().parent / "hf_jobs_smoke.py"
     script_args = [
         "--repo-url",
