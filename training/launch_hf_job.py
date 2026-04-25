@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 import os
 import shlex
@@ -18,6 +19,7 @@ DEFAULT_FLAVOR = "t4-small"
 DEFAULT_TIMEOUT = "2h"
 DEFAULT_OUTPUT_DIR = "outputs/committee-grpo-hf-job"
 DEFAULT_MODEL = "Qwen/Qwen3-0.6B"
+DEFAULT_ARTIFACT_REPO_SUFFIX = "amc-allocator-job-artifacts"
 DEFAULT_DEPENDENCIES = [
     "trl",
     "datasets",
@@ -111,6 +113,10 @@ def ensure_hf_auth(namespace: str, token: Any) -> None:
 def launch(args: argparse.Namespace) -> None:
     ensure_hf_auth(args.namespace, args.token)
     job_token = resolve_job_token(args.token)
+    artifact_repo = args.artifact_repo or f"{args.namespace}/{DEFAULT_ARTIFACT_REPO_SUFFIX}"
+    artifact_subdir = args.artifact_subdir or datetime.now(timezone.utc).strftime(
+        "hf-job-%Y%m%d-%H%M%S"
+    )
     script = Path(__file__).resolve().parent / "hf_jobs_smoke.py"
     script_args = [
         "--repo-url",
@@ -129,6 +135,10 @@ def launch(args: argparse.Namespace) -> None:
         args.colab_email,
         "--notes",
         args.notes,
+        "--artifact-repo",
+        artifact_repo,
+        "--artifact-subdir",
+        artifact_subdir,
     ]
     if args.use_lora:
         script_args.append("--use-lora")
@@ -159,11 +169,13 @@ def launch(args: argparse.Namespace) -> None:
         namespace=args.namespace,
         token=job_token,
         env={"PYTHONUNBUFFERED": "1"},
+        secrets={"HF_TOKEN": job_token},
     )
     _print_job(job)
     print("\nNext commands:")
     print(f"python3 training/launch_hf_job.py inspect {job.id}")
     print(f"python3 training/launch_hf_job.py logs {job.id}")
+    print(f"Artifacts will upload to dataset://{artifact_repo}/{artifact_subdir}")
 
 
 def inspect_job(args: argparse.Namespace) -> None:
@@ -221,6 +233,16 @@ def build_parser() -> argparse.ArgumentParser:
     launch_parser.add_argument("--timeout", default=DEFAULT_TIMEOUT)
     launch_parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
     launch_parser.add_argument("--model", default=DEFAULT_MODEL)
+    launch_parser.add_argument(
+        "--artifact-repo",
+        default=None,
+        help="HF dataset repo used to persist job artifacts. Defaults to <namespace>/amc-allocator-job-artifacts.",
+    )
+    launch_parser.add_argument(
+        "--artifact-subdir",
+        default=None,
+        help="Optional artifact subdirectory. Defaults to a UTC timestamp label.",
+    )
     launch_parser.add_argument("--repeats-per-task", type=int, default=2)
     launch_parser.add_argument("--max-steps", type=int, default=4)
     launch_parser.set_defaults(use_lora=True, print_baselines=False)

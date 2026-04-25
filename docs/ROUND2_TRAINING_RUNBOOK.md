@@ -69,12 +69,15 @@ What this does:
 - uses the public repo mirror as the source of truth
 - runs the same PM smoke workflow used in Colab
 - defaults to:
-  - hardware: `t4-small`
-  - timeout: `2h`
-  - model: `Qwen/Qwen3-0.6B`
-  - `--use-lora`
-  - `--repeats-per-task 2`
-  - `--max-steps 4`
+- hardware: `t4-small`
+- timeout: `2h`
+- model: `Qwen/Qwen3-0.6B`
+- `--use-lora`
+- `--repeats-per-task 2`
+- `--max-steps 4`
+- artifact upload target:
+  - dataset repo: `anupamagarwal001/amc-allocator-job-artifacts`
+  - only judge-facing files are uploaded, not full checkpoints
 
 Inspect and stream the job:
 
@@ -95,6 +98,7 @@ Why this is the right place to spend the `$30` credit:
 - it buys repeatable GPU training and eval
 - it is cheaper and more targeted than turning the Space into an always-on paid GPU service
 - it fits the hackathon requirement of showing real training evidence better than ad hoc notebook-only runs
+- it persists reward curves and reports into a dedicated HF dataset repo instead of losing them in ephemeral job logs
 
 ### 1. Check baselines first
 
