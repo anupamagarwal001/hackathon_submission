@@ -223,7 +223,7 @@ def build_parser() -> argparse.ArgumentParser:
     launch_parser.add_argument("--model", default=DEFAULT_MODEL)
     launch_parser.add_argument("--repeats-per-task", type=int, default=2)
     launch_parser.add_argument("--max-steps", type=int, default=4)
-    launch_parser.set_defaults(use_lora=True, print_baselines=True)
+    launch_parser.set_defaults(use_lora=True, print_baselines=False)
     launch_parser.add_argument("--use-lora", dest="use_lora", action="store_true")
     launch_parser.add_argument("--no-lora", dest="use_lora", action="store_false")
     launch_parser.add_argument("--lora-r", type=int, default=8)
