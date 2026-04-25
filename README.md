@@ -17,6 +17,18 @@ tags:
 
 `amc_allocator_env` is a deterministic OpenEnv environment for the Meta PyTorch OpenEnv Hackathon. It simulates a small institutional investment workflow where a trainable Portfolio Manager interacts with a scripted Research Analyst and Risk Officer while managing a portfolio of Indian IT services stocks.
 
+## Links
+
+- Hugging Face Space: [anupamagarwal001/amc_allocator_env](https://huggingface.co/spaces/anupamagarwal001/amc_allocator_env)
+- Live app: [anupamagarwal001-amc-allocator-env.hf.space](https://anupamagarwal001-amc-allocator-env.hf.space)
+- Public GitHub mirror: [anupamagarwal001/hackathon_submission](https://github.com/anupamagarwal001/hackathon_submission)
+- Colab training notebook: [`training/committee_grpo_colab.ipynb`](./training/committee_grpo_colab.ipynb)
+- Mini-blog draft: [`docs/ROUND2_HF_MINI_BLOG_DRAFT.md`](./docs/ROUND2_HF_MINI_BLOG_DRAFT.md)
+- Pitch script: [`docs/ROUND2_PITCH_SCRIPT.md`](./docs/ROUND2_PITCH_SCRIPT.md)
+- Demo flow: [`docs/ROUND2_DEMO_FLOW.md`](./docs/ROUND2_DEMO_FLOW.md)
+- On-site checklist: [`docs/ROUND2_ONSITE_CHECKLIST.md`](./docs/ROUND2_ONSITE_CHECKLIST.md)
+- Presentation outline: [`docs/ROUND2_PRESENTATION_SLIDES.md`](./docs/ROUND2_PRESENTATION_SLIDES.md)
+
 ## Overview
 
 - committee-style environment, not a single-step toy allocator
@@ -25,6 +37,15 @@ tags:
 - typed OpenEnv `Action`, `Observation`, and extended `State`
 - root-level `inference.py` for validator-compatible structured output
 - minimal TRL training scaffold for the Portfolio Manager in [`training/`](./training)
+
+## Why This Is A Fresh Theme-1 Environment
+
+The judges explicitly ask whether the environment teaches an LLM something it currently cannot do well, whether the domain is underexplored, and whether the setup could support research. This environment is built around those questions.
+
+- **Not a game clone:** the agent is not solving chess, snake, or a grid world. It is learning an institutional workflow with conflicting incentives.
+- **Real multi-agent dynamics:** the Portfolio Manager depends on Research for opportunity discovery and on Risk for mandate enforcement. Those two actors can disagree, which forces negotiation-like behavior rather than single-step prediction.
+- **Partially observable incentives:** the PM never sees the hidden market regime directly, and it cannot optimize purely for return because constraint pressure and risk alerts change the value of each action.
+- **Research-worthy framing:** the core problem is whether verifier-driven RL can train an LLM to resolve strategic disagreement under changing incentives in a professional workflow. That is a more interesting research question than “can an allocator follow a signal.”
 
 ## Task Suite
 
@@ -138,6 +159,47 @@ Expected behavior:
 - all final scores remain in `0.0–1.0`
 - `inference.py` emits `[START]`, `[STEP]`, and `[END]` blocks for the validator
 
+Multi-seed on-site baseline snapshot from the verified Colab run:
+
+| policy | score | total_return | max_drawdown | compliance_score | information_usage | risk_response |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| heuristic | 0.4084 | 0.0217 | 0.0153 | 0.6611 | 0.2716 | 0.0181 |
+| random | 0.2504 | -0.0061 | 0.0209 | 0.7584 | 0.0436 | 0.0307 |
+
+![Deterministic baseline comparison](./docs/assets/baseline_score_comparison.png)
+
+The heuristic does not dominate every component. That is intentional. Random can be slightly more conservative on compliance-only dimensions, but it loses on the objective that matters: the multi-objective overall score produced by return, drawdown, information usage, and risk-aware decision quality together.
+
+## Training Evidence
+
+The current training story is a real smoke run, not a mocked chart:
+
+- environment: `AI Investment Committee Environment`
+- runtime: Google Colab `T4 GPU`
+- model: `Qwen/Qwen3-0.6B`
+- trainer: HF `TRL` `GRPOTrainer`
+- adapter path: `LoRA`
+- config: `use_lora=True`, `repeats_per_task=2`, `max_steps=4`
+
+Verified outputs from the run:
+
+- reward start: `0.0193`
+- reward end: `0.0275`
+- reward delta: `+0.0082`
+- best step: `4`
+- committed artifacts:
+  - `baseline_report.json`
+  - `training_log_history.json`
+  - `judging_report.json`
+  - `judging_report.md`
+  - `onsite_demo_summary.md`
+  - `reward_series.json`
+  - `reward_curve.png`
+
+![Smoke training reward curve](./docs/assets/reward_curve.png)
+
+The point of this run is not to claim a fully converged PM. The point is to show end-to-end trainability: a real environment, real verifier-style rewards, a real trainer, and measurable positive movement in a repeatable short-horizon on-site run.
+
 ## Training Surface
 
 Round 2 training files:
@@ -167,6 +229,12 @@ Verified Colab smoke result on April 22, 2026:
 - baseline summary: heuristic `0.4084`, random `0.2504`
 - trainer reward series: `0.0193 -> 0.0160 -> 0.0006 -> 0.0275`
 - final reward delta: `+0.0082`
+
+To regenerate the committed README plots from the verified smoke metrics:
+
+```bash
+python3 training/generate_readme_assets.py
+```
 
 ## Running Locally
 
@@ -239,6 +307,16 @@ Local fallback path:
 - `OPENAI_API_KEY`
 
 The runtime prefers the injected validator credentials when `API_KEY` is present.
+
+## Supporting Materials
+
+Judge-facing support artifacts linked from this README:
+
+- mini-blog draft: [`docs/ROUND2_HF_MINI_BLOG_DRAFT.md`](./docs/ROUND2_HF_MINI_BLOG_DRAFT.md)
+- pitch and Q&A script: [`docs/ROUND2_PITCH_SCRIPT.md`](./docs/ROUND2_PITCH_SCRIPT.md)
+- on-site demo flow: [`docs/ROUND2_DEMO_FLOW.md`](./docs/ROUND2_DEMO_FLOW.md)
+- on-site execution checklist: [`docs/ROUND2_ONSITE_CHECKLIST.md`](./docs/ROUND2_ONSITE_CHECKLIST.md)
+- short slide-deck outline: [`docs/ROUND2_PRESENTATION_SLIDES.md`](./docs/ROUND2_PRESENTATION_SLIDES.md)
 
 ## Server and Deployment
 

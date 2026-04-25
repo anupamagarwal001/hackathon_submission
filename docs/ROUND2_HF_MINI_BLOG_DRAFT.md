@@ -111,6 +111,15 @@ The point is to help LLMs learn behaviors that matter in real professional setti
 
 That is why we think the environment is a strong fit for OpenEnv and for the broader direction of RL post-training for agent systems.
 
+## Why this is a fresh angle
+
+The hackathon theme is intentionally open-ended, and the judges explicitly warn against well-worn toy benchmarks. We leaned into that.
+
+- This is not a board game, a grid world, or a synthetic negotiation toy.
+- The environment teaches a real capability gap: handling conflicting incentives across multiple roles inside a partially observable workflow.
+- The domain is underexplored in RL-for-LLM training. Plenty of environments teach solving a puzzle; far fewer teach a model how to operate inside a professional committee that must trade off opportunity, compliance, and regime uncertainty.
+- There is a clear research question here: can verifier-driven RL improve strategic coordination and risk-aware decision making in a realistic investment workflow?
+
 ## Repo and training artifacts
 
 The repo contains:
@@ -137,3 +146,10 @@ The next step is to scale beyond the smoke run while preserving the same propert
 - multi-agent realism
 - stable reward behavior
 - clear before/after improvement
+
+## Links
+
+- Hugging Face Space: [anupamagarwal001/amc_allocator_env](https://huggingface.co/spaces/anupamagarwal001/amc_allocator_env)
+- Public GitHub mirror: [anupamagarwal001/hackathon_submission](https://github.com/anupamagarwal001/hackathon_submission)
+- Pitch script: [`docs/ROUND2_PITCH_SCRIPT.md`](./ROUND2_PITCH_SCRIPT.md)
+- Slide outline: [`docs/ROUND2_PRESENTATION_SLIDES.md`](./ROUND2_PRESENTATION_SLIDES.md)

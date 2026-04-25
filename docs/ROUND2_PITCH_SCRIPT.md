@@ -14,6 +14,8 @@ We define three roles: a **Research Analyst**, a **Risk Officer**, and a **Portf
 
 The goal is not simply to maximize return. The agent must learn to use information well, adapt to regime changes, avoid compliance mistakes, and manage drawdown over a long horizon.
 
+The novelty is that this is not a toy market game. It is a professional multi-agent workflow with conflicting incentives, partial observability, and verifier-based rewards. The trainable agent has to resolve disagreement between Research and Risk instead of just following a signal.
+
 We designed four tasks of increasing difficulty:
 
 - guided allocation
@@ -71,6 +73,14 @@ Training only the Portfolio Manager keeps the environment stable and gives a cle
 ### Why is this more than a toy simulator?
 
 Because the PM must coordinate with multiple actors, handle partial observability, adapt to regime shifts, and respect changing constraints over time.
+
+### Why is this actually novel for the hackathon?
+
+Because it targets an underexplored capability gap: structured strategic disagreement in a professional workflow. The environment teaches an LLM to resolve conflicting incentives between opportunity-seeking and risk control, which is much closer to real agent deployment than a static finance benchmark or a toy game.
+
+### Could this support research beyond the hackathon?
+
+Yes. The research question is whether verifier-driven RL can improve multi-agent coordination, information usage, and risk-aware decision making in a partially observable institutional environment. That is a defensible RL-for-LLM training question, not just a demo gimmick.
 
 ### Why is the reward credible?
 
