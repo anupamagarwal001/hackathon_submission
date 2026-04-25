@@ -2,7 +2,23 @@
 
 ## 30-Second Version
 
-We built AI Investment Committee Environment, a multi-agent OpenEnv environment where a trainable Portfolio Manager learns to make investment decisions by coordinating with a Research Analyst and a Risk Officer. The environment simulates realistic institutional workflows with noisy signals, hidden market regimes, changing constraints, and measurable rewards. Our goal is to train the PM to improve not just returns, but also risk control, adaptation, and decision quality.
+We built AI Investment Committee Environment, a benchmark for conflict-aware decision-making in LLM agents. The core question is simple: when Research says buy but Risk says the mandate is under pressure, does the Portfolio Manager blindly chase the signal or resolve the conflict? Our OpenEnv environment measures that behavior with verifier-style rewards, and our verified GRPO smoke run improved reward from `0.0193` to `0.0275`.
+
+## 90-Second Video Script
+
+LLMs are good at giving financial opinions, but real investment decisions are about resolving conflicting incentives.
+
+We built a multi-agent OpenEnv environment where Research, Risk, and a Portfolio Manager interact inside a small investment committee.
+
+Here is the failure mode we target: Research gives a strong buy signal in high-momentum tech, but Risk warns that volatility and concentration are above mandate. A bad Portfolio Manager follows Research only, increases concentration, and gets penalized for compliance and drawdown.
+
+The target behavior is different: query both agents, reduce concentration, preserve the return signal, and avoid mandate violations.
+
+The environment scores this with multiple verifier-style rewards: task score, compliance quality, risk response, and information usage. That makes the reward harder to game than a single return-only score.
+
+In our verified 4-step GRPO smoke run with Qwen3-0.6B and LoRA, reward improved from `0.0193` to `0.0275`. We also ran an 8-step comparison and saw it regress after step `4`, so we use the 4-step run as the stable demonstrated configuration.
+
+This is not a trading system. It is a benchmark for whether LLM agents can learn conflict-aware professional decision-making under partial information.
 
 ## Full 3-Minute Script
 
@@ -15,6 +31,8 @@ We define three roles: a **Research Analyst**, a **Risk Officer**, and a **Portf
 The goal is not simply to maximize return. The agent must learn to use information well, adapt to regime changes, avoid compliance mistakes, and manage drawdown over a long horizon.
 
 The novelty is that this is not a toy market game. It is a professional multi-agent workflow with conflicting incentives, partial observability, and verifier-based rewards. The trainable agent has to resolve disagreement between Research and Risk instead of just following a signal.
+
+The core failure mode is visible: Research can say "buy" while Risk says the portfolio is already too concentrated or too volatile. A weak PM follows the signal blindly. A better PM uses both inputs and chooses a more balanced allocation.
 
 We designed four tasks of increasing difficulty:
 

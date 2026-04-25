@@ -17,6 +17,39 @@ tags:
 
 `amc_allocator_env` is a deterministic OpenEnv environment for the Meta PyTorch OpenEnv Hackathon. It simulates a small institutional investment workflow where a trainable Portfolio Manager interacts with a scripted Research Analyst and Risk Officer while managing a portfolio of Indian IT services stocks.
 
+## Judge TL;DR
+
+**Claim:** this is a benchmark for conflict-aware decision-making in LLM agents. It exposes whether a Portfolio Manager blindly follows Research signals or learns to balance them against Risk constraints under partial observability.
+
+**Measured evidence:**
+
+- heuristic PM beats random across the task suite: `0.4084` vs `0.2504`
+- verified GRPO smoke reward improved from `0.0193` to `0.0275`
+- an 8-step comparison peaked at step `4` and then regressed, so `max_steps=4` is the verified stable smoke config
+
+![Conflict resolution snapshot](./docs/assets/conflict_resolution_snapshot.png)
+
+## Failure Mode: Ignoring Risk
+
+The core test is not “can the PM pick the highest signal?” The core test is whether the PM can resolve conflict when Research and Risk disagree.
+
+```text
+Research: strong buy signal in high-momentum tech
+Risk: volatility and concentration exceed mandate pressure
+
+Bad PM:
+  follows Research only
+  increases concentration
+  triggers compliance and drawdown penalties
+
+Target PM behavior:
+  queries both Research and Risk
+  reduces concentration
+  preserves the return signal without violating constraints
+```
+
+That makes the environment a measurable benchmark for professional conflict resolution, not a generic finance simulator.
+
 ## Links
 
 - Hugging Face Space: [anupamagarwal001/amc_allocator_env](https://huggingface.co/spaces/anupamagarwal001/amc_allocator_env)
