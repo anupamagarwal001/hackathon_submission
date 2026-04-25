@@ -24,10 +24,18 @@ tags:
 **Measured evidence:**
 
 - heuristic PM beats random across the task suite: `0.4084` vs `0.2504`
-- verified GRPO smoke reward improved from `0.0193` to `0.0275`
+- even a short verified GRPO smoke run produced measurable reward improvement under this verifier: `0.0193` to `0.0275`
 - an 8-step comparison peaked at step `4` and then regressed, so `max_steps=4` is the verified stable smoke config
 
+### Conflict Resolution Snapshot
+
+This example shows how a naive PM ignores Risk warnings, while a better PM balances Research conviction with mandate constraints.
+
 ![Conflict resolution snapshot](./docs/assets/conflict_resolution_snapshot.png)
+
+## 90-Second Demo
+
+YouTube demo URL: pending final upload.
 
 ## Failure Mode: Ignoring Risk
 
