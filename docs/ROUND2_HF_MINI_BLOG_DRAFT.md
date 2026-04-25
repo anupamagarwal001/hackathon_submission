@@ -2,7 +2,13 @@
 
 ## What we built
 
-For the Meta PyTorch OpenEnv Hackathon x Scaler School of Technology Grand Finale, we built **AI Investment Committee Environment**, a multi-agent OpenEnv environment for training a Portfolio Manager agent inside a realistic investment workflow.
+For the Meta PyTorch OpenEnv Hackathon x Scaler School of Technology Grand Finale, we built **AI Investment Committee Environment**, a benchmark for conflict-aware decision-making in LLM agents.
+
+The core question is:
+
+> When Research says "buy" but Risk says the mandate is under pressure, does the Portfolio Manager blindly chase the signal or resolve the conflict?
+
+That is the capability gap this environment is designed to measure.
 
 Instead of treating portfolio allocation as a single-step prediction problem, we modeled it as a committee process:
 
@@ -10,7 +16,28 @@ Instead of treating portfolio allocation as a single-step prediction problem, we
 - a **Risk Officer** enforces constraints and flags fragility
 - a trainable **Portfolio Manager** decides when to query, allocate, hold, or move to cash
 
-This turns portfolio management into a proper agent environment with state, actions, delayed outcomes, partial observability, and measurable rewards.
+This turns portfolio management into a proper agent environment with state, actions, delayed outcomes, partial observability, and measurable rewards. More importantly, it turns a finance workflow into a test of professional conflict resolution.
+
+## Failure mode: ignoring Risk
+
+The environment is built around a concrete failure mode:
+
+```text
+Research: strong buy signal in high-momentum tech
+Risk: volatility and concentration exceed mandate pressure
+
+Bad PM:
+  follows Research only
+  increases concentration
+  triggers compliance and drawdown penalties
+
+Target PM:
+  queries both Research and Risk
+  reduces concentration
+  preserves the return signal without violating constraints
+```
+
+This is what makes the environment more than an allocation simulator. It tests whether the agent can balance conflicting professional incentives.
 
 ## Why this fits OpenEnv
 
@@ -96,7 +123,7 @@ Verified T4 smoke training run:
 - best step: `4`
 - final delta: `+0.0082`
 
-We also tested a longer `8`-step run and observed regression after the mid-run peak. That was useful because it gave us a realistic picture of where the smoke configuration is stable and where it starts to overfit.
+We also tested a longer `8`-step run and observed regression after the mid-run peak. That was useful because it gave us a realistic picture of where the smoke configuration is stable and where additional optimization starts to drift.
 
 ## Why this matters
 

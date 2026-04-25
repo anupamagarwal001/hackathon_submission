@@ -49,6 +49,8 @@ LABEL_FONT = load_font(24)
 TICK_FONT = load_font(20)
 BODY_FONT = load_font(22)
 SMALL_FONT = load_font(18)
+BIG_FONT = load_font(42, bold=True)
+MID_FONT = load_font(28, bold=True)
 
 
 def draw_axes(draw: ImageDraw.ImageDraw) -> tuple[int, int, int, int]:
@@ -68,6 +70,37 @@ def draw_centered(draw: ImageDraw.ImageDraw, box: tuple[int, int, int, int], tex
     x = box[0] + (box[2] - box[0] - tw) / 2
     y = box[1] + (box[3] - box[1] - th) / 2
     draw.text((x, y), text, font=font, fill=fill)
+
+
+def draw_wrapped(
+    draw: ImageDraw.ImageDraw,
+    xy: tuple[int, int],
+    text: str,
+    font,
+    fill=TEXT,
+    max_width: int = 340,
+    line_gap: int = 8,
+) -> int:
+    words = text.split()
+    lines: list[str] = []
+    current: list[str] = []
+    for word in words:
+        candidate = " ".join(current + [word])
+        bbox = draw.textbbox((0, 0), candidate, font=font)
+        if current and bbox[2] - bbox[0] > max_width:
+            lines.append(" ".join(current))
+            current = [word]
+        else:
+            current.append(word)
+    if current:
+        lines.append(" ".join(current))
+
+    x, y = xy
+    line_height = draw.textbbox((0, 0), "Ag", font=font)[3]
+    for line in lines:
+        draw.text((x, y), line, font=font, fill=fill)
+        y += line_height + line_gap
+    return y
 
 
 def generate_reward_curve() -> Path:
@@ -165,12 +198,94 @@ def generate_baseline_chart() -> Path:
     return path
 
 
+def generate_conflict_snapshot() -> Path:
+    image = Image.new("RGB", (WIDTH, HEIGHT), "#f8fafc")
+    draw = ImageDraw.Draw(image)
+
+    draw.text((64, 38), "Conflict Resolution Snapshot", font=BIG_FONT, fill=TEXT)
+    draw.text(
+        (64, 92),
+        "The benchmark exposes when a PM blindly follows Research while Risk is warning about mandate pressure.",
+        font=BODY_FONT,
+        fill=AXIS,
+    )
+
+    panel_y = 150
+    panel_h = 270
+    gap = 28
+    panel_w = (WIDTH - 128 - gap * 2) // 3
+    panels = [
+        (
+            "Research",
+            "#dbeafe",
+            BLUE,
+            "BUY high-momentum tech. Signals are positive and sector trend is improving.",
+        ),
+        (
+            "Risk",
+            "#fee2e2",
+            RED,
+            "Volatility and concentration are above mandate. Aggressive allocation triggers penalty.",
+        ),
+        (
+            "PM Decision",
+            "#dcfce7",
+            GREEN,
+            "Good behavior: query both agents, reduce concentration, and keep risk-adjusted exposure.",
+        ),
+    ]
+    for idx, (title, bg, accent, body) in enumerate(panels):
+        x0 = 64 + idx * (panel_w + gap)
+        y0 = panel_y
+        x1 = x0 + panel_w
+        y1 = y0 + panel_h
+        draw.rounded_rectangle((x0, y0, x1, y1), radius=18, fill=bg, outline=accent, width=3)
+        draw.text((x0 + 24, y0 + 24), title, font=MID_FONT, fill=accent)
+        draw_wrapped(draw, (x0 + 24, y0 + 78), body, BODY_FONT, fill=TEXT, max_width=panel_w - 48)
+
+    lower_y = 462
+    draw.rounded_rectangle((64, lower_y, 556, 640), radius=18, fill="white", outline=RED, width=3)
+    draw.text((92, lower_y + 26), "Failure Mode: Ignoring Risk", font=MID_FONT, fill=RED)
+    draw_wrapped(
+        draw,
+        (92, lower_y + 78),
+        "Baseline PM chases the buy signal, violates constraints, and loses reward to compliance and drawdown penalties.",
+        BODY_FONT,
+        fill=TEXT,
+        max_width=420,
+    )
+
+    draw.rounded_rectangle((644, lower_y, 1136, 640), radius=18, fill="white", outline=GREEN, width=3)
+    draw.text((672, lower_y + 26), "Target Behavior: Resolve Conflict", font=MID_FONT, fill=GREEN)
+    draw_wrapped(
+        draw,
+        (672, lower_y + 78),
+        "The environment rewards balanced decisions: use Research, respect Risk, reduce concentration, and preserve return signal.",
+        BODY_FONT,
+        fill=TEXT,
+        max_width=420,
+    )
+
+    draw.text(
+        (64, HEIGHT - 42),
+        "Falsifiable claim: GRPO smoke reward improved from 0.0193 to 0.0275 under this verifier.",
+        font=SMALL_FONT,
+        fill=AXIS,
+    )
+
+    path = OUTPUT_DIR / "conflict_resolution_snapshot.png"
+    image.save(path)
+    return path
+
+
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     reward_path = generate_reward_curve()
     baseline_path = generate_baseline_chart()
+    conflict_path = generate_conflict_snapshot()
     print(f"wrote {reward_path}")
     print(f"wrote {baseline_path}")
+    print(f"wrote {conflict_path}")
 
 
 if __name__ == "__main__":
