@@ -151,6 +151,6 @@ The next step is to scale beyond the smoke run while preserving the same propert
 
 - Hugging Face Space: [anupamagarwal001/amc_allocator_env](https://huggingface.co/spaces/anupamagarwal001/amc_allocator_env)
 - Public GitHub mirror: [anupamagarwal001/hackathon_submission](https://github.com/anupamagarwal001/hackathon_submission)
-- Slide deck: [`AI_Investment_Committee_Deck.pptx`](./AI_Investment_Committee_Deck.pptx)
+- Slide deck: [`AI_Investment_Committee_Deck.html`](./AI_Investment_Committee_Deck.html)
 - Pitch script: [`docs/ROUND2_PITCH_SCRIPT.md`](./ROUND2_PITCH_SCRIPT.md)
 - Slide outline: [`docs/ROUND2_PRESENTATION_SLIDES.md`](./ROUND2_PRESENTATION_SLIDES.md)

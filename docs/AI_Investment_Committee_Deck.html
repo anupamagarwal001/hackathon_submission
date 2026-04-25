@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Investment Committee Environment Deck</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --accent: #2563eb;
+      --border: #cbd5e1;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 24px 64px;
+    }
+    .slide {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 36px;
+      margin-bottom: 24px;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+    }
+    .eyebrow {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    h1, h2 {
+      margin: 0 0 12px;
+      color: var(--text);
+    }
+    h1 { font-size: 38px; }
+    h2 { font-size: 30px; }
+    p, li { font-size: 18px; color: var(--muted); }
+    ul { margin: 12px 0 0 20px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px;
+      margin-top: 16px;
+    }
+    .card {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      color: var(--accent);
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .metric {
+      background: #eff6ff;
+      border-radius: 14px;
+      padding: 16px;
+      border: 1px solid #bfdbfe;
+    }
+    .metric strong {
+      display: block;
+      font-size: 26px;
+      color: var(--text);
+    }
+    img {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: white;
+    }
+    .links a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    @media (max-width: 900px) {
+      .grid, .metrics { grid-template-columns: 1fr; }
+      h1 { font-size: 30px; }
+      h2 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="slide">
+      <div class="eyebrow">Slide 1</div>
+      <h1>AI Investment Committee Environment</h1>
+      <p>OpenEnv Theme #1 submission: a multi-agent professional workflow where a trainable Portfolio Manager learns to resolve disagreement between Research and Risk under partial observability and changing constraints.</p>
+      <ul>
+        <li>Not a toy market game or single-step allocator.</li>
+        <li>Built to teach structured strategic coordination that LLMs still do poorly.</li>
+        <li>Trainable through verifier-style rewards using OpenEnv + TRL + LoRA.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <div class="eyebrow">Slide 2</div>
+      <h2>Why This Is Fresh</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Capability gap</h3>
+          <ul>
+            <li>Research and Risk can disagree.</li>
+            <li>The PM must ask for information, not just react to a score.</li>
+            <li>Hidden regimes and changing mandates force strategic adaptation.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Why it matters</h3>
+          <ul>
+            <li>Underexplored in RL-for-LLM training versus games or static coding benchmarks.</li>
+            <li>Close to real deployment settings: partially observable, multi-role, constrained.</li>
+            <li>Defensible research question: can verifier-driven RL improve coordination under conflicting incentives?</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="eyebrow">Slide 3</div>
+      <h2>Environment Design</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Agents</h3>
+          <ul>
+            <li>Portfolio Manager: only trainable agent</li>
+            <li>Research Analyst: scripted, noisy but useful views</li>
+            <li>Risk Officer: scripted, enforces concentration and mandate pressure</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Task suite</h3>
+          <ul>
+            <li><code>guided_allocation</code></li>
+            <li><code>research_risk_conflict</code></li>
+            <li><code>regime_shift_recovery</code></li>
+            <li><code>mandate_drift</code></li>
+          </ul>
+        </div>
+      </div>
+      <p>Reward is decomposed into verifier-style components: return, drawdown, compliance, information usage, risk response, costs, and invalid-action penalties.</p>
+    </section>
+
+    <section class="slide">
+      <div class="eyebrow">Slide 4</div>
+      <h2>Baseline Evidence</h2>
+      <img src="./assets/baseline_score_comparison.png" alt="Baseline score comparison">
+      <div class="metrics">
+        <div class="metric"><span>Heuristic score</span><strong>0.4084</strong></div>
+        <div class="metric"><span>Random score</span><strong>0.2504</strong></div>
+        <div class="metric"><span>Score delta</span><strong>+0.1580</strong></div>
+        <div class="metric"><span>Task suite</span><strong>4 tasks</strong></div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="eyebrow">Slide 5</div>
+      <h2>Training Evidence</h2>
+      <img src="./assets/reward_curve.png" alt="Smoke training reward curve">
+      <div class="metrics">
+        <div class="metric"><span>Reward start</span><strong>0.0193</strong></div>
+        <div class="metric"><span>Reward end</span><strong>0.0275</strong></div>
+        <div class="metric"><span>Reward delta</span><strong>+0.0082</strong></div>
+        <div class="metric"><span>Best step</span><strong>4</strong></div>
+      </div>
+      <p>Verified on a Colab T4 smoke run with <code>Qwen/Qwen3-0.6B</code>, HF <code>TRL</code> <code>GRPOTrainer</code>, and LoRA adapters.</p>
+    </section>
+
+    <section class="slide">
+      <div class="eyebrow">Slide 6</div>
+      <h2>Why It Matters</h2>
+      <ul>
+        <li>This environment teaches structured multi-agent reasoning inside a realistic professional workflow.</li>
+        <li>It shows end-to-end trainability: environment, rewards, baseline comparison, training curve, and judge-facing reports.</li>
+        <li>It is a stronger Theme #1 fit than a generic finance benchmark because the hard part is conflict resolution under changing incentives.</li>
+      </ul>
+      <p class="links">
+        Repo: <a href="https://github.com/anupamagarwal001/hackathon_submission">github.com/anupamagarwal001/hackathon_submission</a><br>
+        Space: <a href="https://huggingface.co/spaces/anupamagarwal001/amc_allocator_env">huggingface.co/spaces/anupamagarwal001/amc_allocator_env</a>
+      </p>
+    </section>
+  </main>
+</body>
+</html>
