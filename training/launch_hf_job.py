@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
+import os
+import shlex
 from pathlib import Path
 from typing import Any
 
-from huggingface_hub import HfApi, SpaceHardware, run_uv_job
+from huggingface_hub import HfApi, SpaceHardware, get_token, run_uv_job
+from huggingface_hub.errors import HfHubHTTPError, LocalTokenNotFoundError
 
 DEFAULT_REPO_URL = "https://github.com/anupamagarwal001/hackathon_submission.git"
 DEFAULT_NAMESPACE = "anupamagarwal001"
@@ -15,6 +19,7 @@ DEFAULT_FLAVOR = "t4-small"
 DEFAULT_TIMEOUT = "2h"
 DEFAULT_OUTPUT_DIR = "outputs/committee-grpo-hf-job"
 DEFAULT_MODEL = "Qwen/Qwen3-0.6B"
+DEFAULT_ARTIFACT_REPO_SUFFIX = "amc-allocator-job-artifacts"
 DEFAULT_DEPENDENCIES = [
     "trl",
     "datasets",
@@ -46,7 +51,72 @@ def _print_job(job) -> None:
     print(json.dumps(payload, indent=2))
 
 
+def _token_display(token: Any) -> str:
+    if isinstance(token, str):
+        return "provided-token"
+    if token is True:
+        return "local-login"
+    if token is False or token is None:
+        return "anonymous"
+    return str(token)
+
+
+def resolve_job_token(token: Any) -> str | bool | None:
+    """Resolve launcher auth into the concrete token form expected by run_uv_job()."""
+
+    if isinstance(token, str) and token.strip():
+        return token
+    if token is True:
+        resolved = get_token()
+        if not resolved:
+            raise RuntimeError(
+                "Requested local Hugging Face login, but no saved token was found. "
+                "Run `hf auth login` first or pass --token <hf_token>."
+            )
+        return resolved
+    return token
+
+
+def ensure_hf_auth(namespace: str, token: Any) -> None:
+    """Fail early with a clear message if the local machine is not logged in."""
+
+    api = HfApi()
+    try:
+        who = api.whoami(token=token)
+    except (HfHubHTTPError, LocalTokenNotFoundError) as exc:  # pragma: no cover
+        token_file_candidates = [
+            Path.home() / ".cache" / "huggingface" / "token",
+            Path.home() / ".huggingface" / "token",
+        ]
+        token_files = [str(path) for path in token_file_candidates if path.exists()]
+        raise RuntimeError(
+            "Hugging Face authentication is missing or invalid.\n"
+            f"- launcher auth mode: {_token_display(token)}\n"
+            f"- namespace: {namespace}\n"
+            f"- HF_TOKEN env present: {'yes' if os.getenv('HF_TOKEN') else 'no'}\n"
+            f"- saved token files: {token_files if token_files else 'none'}\n\n"
+            "Why this matters:\n"
+            "- run_uv_job() creates a private helper dataset repo in your HF namespace\n"
+            "  (for example `anupamagarwal001/hf-cli-jobs-uv-run-scripts`).\n"
+            "- that requires a valid logged-in token with write access.\n\n"
+            "Fix:\n"
+            "1. Run `hf auth login`\n"
+            "2. Paste a Hugging Face write token for your personal namespace\n"
+            "3. Verify with `hf auth whoami`\n"
+            "4. Re-run `python3 training/launch_hf_job.py launch`\n"
+        ) from exc
+
+    who_name = who.get("name") or who.get("fullname") or "unknown"
+    print(f"hf_auth_ok={who_name}", flush=True)
+
+
 def launch(args: argparse.Namespace) -> None:
+    ensure_hf_auth(args.namespace, args.token)
+    job_token = resolve_job_token(args.token)
+    artifact_repo = args.artifact_repo or f"{args.namespace}/{DEFAULT_ARTIFACT_REPO_SUFFIX}"
+    artifact_subdir = args.artifact_subdir or datetime.now(timezone.utc).strftime(
+        "hf-job-%Y%m%d-%H%M%S"
+    )
     script = Path(__file__).resolve().parent / "hf_jobs_smoke.py"
     script_args = [
         "--repo-url",
@@ -65,6 +135,10 @@ def launch(args: argparse.Namespace) -> None:
         args.colab_email,
         "--notes",
         args.notes,
+        "--artifact-repo",
+        artifact_repo,
+        "--artifact-subdir",
+        artifact_subdir,
     ]
     if args.use_lora:
         script_args.append("--use-lora")
@@ -84,20 +158,24 @@ def launch(args: argparse.Namespace) -> None:
         ]
     )
 
+    quoted_script_args = [shlex.quote(value) for value in script_args]
+
     job = run_uv_job(
         script=str(script),
-        script_args=script_args,
+        script_args=quoted_script_args,
         dependencies=DEFAULT_DEPENDENCIES,
         flavor=args.flavor,
         timeout=args.timeout,
         namespace=args.namespace,
-        token=args.token,
+        token=job_token,
         env={"PYTHONUNBUFFERED": "1"},
+        secrets={"HF_TOKEN": job_token},
     )
     _print_job(job)
     print("\nNext commands:")
     print(f"python3 training/launch_hf_job.py inspect {job.id}")
     print(f"python3 training/launch_hf_job.py logs {job.id}")
+    print(f"Artifacts will upload to dataset://{artifact_repo}/{artifact_subdir}")
 
 
 def inspect_job(args: argparse.Namespace) -> None:
@@ -155,9 +233,19 @@ def build_parser() -> argparse.ArgumentParser:
     launch_parser.add_argument("--timeout", default=DEFAULT_TIMEOUT)
     launch_parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
     launch_parser.add_argument("--model", default=DEFAULT_MODEL)
+    launch_parser.add_argument(
+        "--artifact-repo",
+        default=None,
+        help="HF dataset repo used to persist job artifacts. Defaults to <namespace>/amc-allocator-job-artifacts.",
+    )
+    launch_parser.add_argument(
+        "--artifact-subdir",
+        default=None,
+        help="Optional artifact subdirectory. Defaults to a UTC timestamp label.",
+    )
     launch_parser.add_argument("--repeats-per-task", type=int, default=2)
     launch_parser.add_argument("--max-steps", type=int, default=4)
-    launch_parser.set_defaults(use_lora=True, print_baselines=True)
+    launch_parser.set_defaults(use_lora=True, print_baselines=False)
     launch_parser.add_argument("--use-lora", dest="use_lora", action="store_true")
     launch_parser.add_argument("--no-lora", dest="use_lora", action="store_false")
     launch_parser.add_argument("--lora-r", type=int, default=8)

@@ -246,7 +246,7 @@ To spend the claimed HF credits on a repeatable GPU smoke run instead of Colab:
 python3 training/launch_hf_job.py launch
 ```
 
-This launches the default `t4-small` PM smoke training job through Hugging Face Jobs using the public repo mirror.
+This launches the default `t4-small` PM smoke training job through Hugging Face Jobs using the public repo mirror and uploads the judge-facing outputs to the dataset repo `anupamagarwal001/amc-allocator-job-artifacts`.
 
 ## Running Locally
 

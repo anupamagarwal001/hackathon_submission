@@ -48,6 +48,7 @@ from server.amc_environment import ALLOCATION_TEMPLATE_DESCRIPTIONS, AmcAllocato
 from tasks import DEFAULT_TASK_ID, TASK_ORDER
 from training.committee_artifacts import (
     export_baseline_report,
+    export_onsite_demo_summary,
     export_metric_series,
     export_judging_report,
     export_training_log_history,
@@ -574,8 +575,17 @@ def main() -> None:
     except ImportError:
         metric_plot_path = None
     judging_paths = None
+    demo_summary_path = None
     if args.colab_email:
         judging_paths = export_judging_report(
+            args.output_dir,
+            model_name=args.model,
+            colab_account_email=args.colab_email,
+            baseline_payload=baseline_payload,
+            log_history=trainer.state.log_history,
+            notes=args.notes,
+        )
+        demo_summary_path = export_onsite_demo_summary(
             args.output_dir,
             model_name=args.model,
             colab_account_email=args.colab_email,
@@ -595,6 +605,7 @@ def main() -> None:
             if judging_paths
             else ""
         )
+        + (f" onsite_demo_summary={demo_summary_path}" if demo_summary_path else "")
     )
 
 

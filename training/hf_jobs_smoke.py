@@ -8,7 +8,21 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
+
+from huggingface_hub import HfApi
+
+
+JUDGE_ARTIFACT_PATTERNS = [
+    "baseline_report.json",
+    "training_log_history.json",
+    "judging_report.json",
+    "judging_report.md",
+    "onsite_demo_summary.md",
+    "reward_series.json",
+    "reward_curve.png",
+]
 
 
 def run(command: list[str], *, cwd: Path | None = None) -> None:
@@ -39,6 +53,35 @@ def summarize_outputs(output_dir: Path) -> None:
             print(artifact.read_text(encoding="utf-8"), flush=True)
 
 
+def upload_artifacts(
+    output_dir: Path,
+    *,
+    repo_id: str,
+    path_in_repo: str,
+    token: str,
+) -> None:
+    api = HfApi(token=token)
+    api.create_repo(repo_id=repo_id, repo_type="dataset", private=False, exist_ok=True)
+    api.upload_folder(
+        repo_id=repo_id,
+        repo_type="dataset",
+        folder_path=output_dir,
+        path_in_repo=path_in_repo,
+        allow_patterns=JUDGE_ARTIFACT_PATTERNS,
+        commit_message=f"Upload HF Jobs artifacts for {path_in_repo}",
+    )
+    print(f"artifact_repo=dataset://{repo_id}", flush=True)
+    print(f"artifact_repo_path={path_in_repo}", flush=True)
+    print(f"artifact_repo_url=https://huggingface.co/datasets/{repo_id}/tree/main/{path_in_repo}", flush=True)
+    for pattern in JUDGE_ARTIFACT_PATTERNS:
+        file_path = output_dir / pattern
+        if file_path.exists():
+            print(
+                f"artifact_url=https://huggingface.co/datasets/{repo_id}/resolve/main/{path_in_repo}/{pattern}",
+                flush=True,
+            )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run committee smoke training on Hugging Face Jobs.")
     parser.add_argument("--repo-url", required=True, help="Public Git repo URL to clone inside the job.")
@@ -58,6 +101,16 @@ def main() -> None:
     parser.add_argument("--lora-target-modules", default="q_proj,v_proj")
     parser.add_argument("--colab-email", default="anuagar@groww.in")
     parser.add_argument("--notes", default="HF Jobs smoke run for Round 2 committee environment.")
+    parser.add_argument(
+        "--artifact-repo",
+        default=None,
+        help="Optional HF dataset repo id used to persist judge-facing artifacts.",
+    )
+    parser.add_argument(
+        "--artifact-subdir",
+        default=None,
+        help="Optional subdirectory inside the artifact repo.",
+    )
     parser.add_argument(
         "--print-baselines",
         action="store_true",
@@ -111,7 +164,23 @@ def main() -> None:
             flush=True,
         )
         run(train_command, cwd=repo_dir)
-        summarize_outputs(repo_dir / args.job_output_dir)
+        output_dir = repo_dir / args.job_output_dir
+        summarize_outputs(output_dir)
+
+        artifact_repo = args.artifact_repo
+        hf_token = os.getenv("HF_TOKEN")
+        artifact_subdir = args.artifact_subdir or datetime.now(timezone.utc).strftime(
+            "hf-job-%Y%m%d-%H%M%S"
+        )
+        if artifact_repo and hf_token:
+            upload_artifacts(
+                output_dir,
+                repo_id=artifact_repo,
+                path_in_repo=artifact_subdir,
+                token=hf_token,
+            )
+        elif artifact_repo and not hf_token:
+            print("warning=artifact_repo_requested_but_hf_token_missing", flush=True)
     finally:
         shutil.rmtree(workspace, ignore_errors=True)
 
