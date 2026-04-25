@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shlex
 from pathlib import Path
 from typing import Any
 
@@ -147,9 +148,11 @@ def launch(args: argparse.Namespace) -> None:
         ]
     )
 
+    quoted_script_args = [shlex.quote(value) for value in script_args]
+
     job = run_uv_job(
         script=str(script),
-        script_args=script_args,
+        script_args=quoted_script_args,
         dependencies=DEFAULT_DEPENDENCIES,
         flavor=args.flavor,
         timeout=args.timeout,
