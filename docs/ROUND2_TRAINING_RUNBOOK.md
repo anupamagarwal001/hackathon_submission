@@ -15,6 +15,8 @@ Show that the Portfolio Manager can be trained inside the AI Investment Committe
 - [committee_eval.py](/Users/anuagar/Desktop/dev/amc_allocator_env/training/committee_eval.py)
 - [committee_artifacts.py](/Users/anuagar/Desktop/dev/amc_allocator_env/training/committee_artifacts.py)
 - [committee_grpo_colab.ipynb](/Users/anuagar/Desktop/dev/amc_allocator_env/training/committee_grpo_colab.ipynb)
+- [hf_jobs_smoke.py](/Users/anuagar/Desktop/dev/amc_allocator_env/training/hf_jobs_smoke.py)
+- [launch_hf_job.py](/Users/anuagar/Desktop/dev/amc_allocator_env/training/launch_hf_job.py)
 
 ## Training Dependencies
 
@@ -50,6 +52,49 @@ The participant help guide recommends this stack:
 That is exactly how this scaffold is structured.
 
 ## How To Use It
+
+### 0. Preferred path when using Hugging Face credits
+
+If you claimed the hackathon HF coupon, prefer HF Jobs over Colab for repeatable GPU runs.
+
+Launch the default smoke run:
+
+```bash
+python3 training/launch_hf_job.py launch
+```
+
+What this does:
+
+- creates an HF Job in namespace `anupamagarwal001`
+- uses the public repo mirror as the source of truth
+- runs the same PM smoke workflow used in Colab
+- defaults to:
+  - hardware: `t4-small`
+  - timeout: `2h`
+  - model: `Qwen/Qwen3-0.6B`
+  - `--use-lora`
+  - `--repeats-per-task 2`
+  - `--max-steps 4`
+
+Inspect and stream the job:
+
+```bash
+python3 training/launch_hf_job.py inspect <job_id>
+python3 training/launch_hf_job.py logs <job_id>
+```
+
+List and cancel jobs:
+
+```bash
+python3 training/launch_hf_job.py list
+python3 training/launch_hf_job.py cancel <job_id>
+```
+
+Why this is the right place to spend the `$30` credit:
+
+- it buys repeatable GPU training and eval
+- it is cheaper and more targeted than turning the Space into an always-on paid GPU service
+- it fits the hackathon requirement of showing real training evidence better than ad hoc notebook-only runs
 
 ### 1. Check baselines first
 
@@ -192,3 +237,15 @@ After this scaffold works in Colab, add:
 - rollout logging to a file
 - one saved reward curve plot
 - one saved before/after comparison artifact
+
+After claiming HF credits, the next best step is:
+
+1. launch one `t4-small` HF Job smoke run
+2. confirm the reward curve and judging report in logs
+3. launch one slightly longer run, for example:
+
+```bash
+python3 training/launch_hf_job.py launch --max-steps 8 --output-dir outputs/committee-grpo-hf-job-8
+```
+
+4. compare the two runs and keep the cleaner one for the demo story

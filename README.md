@@ -23,6 +23,7 @@ tags:
 - Live app: [anupamagarwal001-amc-allocator-env.hf.space](https://anupamagarwal001-amc-allocator-env.hf.space)
 - Public GitHub mirror: [anupamagarwal001/hackathon_submission](https://github.com/anupamagarwal001/hackathon_submission)
 - Colab training notebook: [`training/committee_grpo_colab.ipynb`](./training/committee_grpo_colab.ipynb)
+- HF Jobs launcher: [`training/launch_hf_job.py`](./training/launch_hf_job.py)
 - Mini-blog draft: [`docs/ROUND2_HF_MINI_BLOG_DRAFT.md`](./docs/ROUND2_HF_MINI_BLOG_DRAFT.md)
 - Short slide deck: [`docs/AI_Investment_Committee_Deck.html`](./docs/AI_Investment_Committee_Deck.html)
 - Pitch script: [`docs/ROUND2_PITCH_SCRIPT.md`](./docs/ROUND2_PITCH_SCRIPT.md)
@@ -209,6 +210,8 @@ Round 2 training files:
 - [`training/committee_eval.py`](./training/committee_eval.py)
 - [`training/committee_artifacts.py`](./training/committee_artifacts.py)
 - [`training/committee_grpo_colab.ipynb`](./training/committee_grpo_colab.ipynb)
+- [`training/hf_jobs_smoke.py`](./training/hf_jobs_smoke.py)
+- [`training/launch_hf_job.py`](./training/launch_hf_job.py)
 - [`docs/ROUND2_TRAINING_RUNBOOK.md`](./docs/ROUND2_TRAINING_RUNBOOK.md)
 - [`docs/ROUND2_DEMO_FLOW.md`](./docs/ROUND2_DEMO_FLOW.md)
 - [`docs/ROUND2_ONSITE_CHECKLIST.md`](./docs/ROUND2_ONSITE_CHECKLIST.md)
@@ -236,6 +239,14 @@ To regenerate the committed README plots from the verified smoke metrics:
 ```bash
 python3 training/generate_readme_assets.py
 ```
+
+To spend the claimed HF credits on a repeatable GPU smoke run instead of Colab:
+
+```bash
+python3 training/launch_hf_job.py launch
+```
+
+This launches the default `t4-small` PM smoke training job through Hugging Face Jobs using the public repo mirror.
 
 ## Running Locally
 
