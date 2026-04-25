@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from huggingface_hub import HfApi, SpaceHardware, run_uv_job
+from huggingface_hub import HfApi, SpaceHardware, get_token, run_uv_job
 from huggingface_hub.errors import HfHubHTTPError, LocalTokenNotFoundError
 
 DEFAULT_REPO_URL = "https://github.com/anupamagarwal001/hackathon_submission.git"
@@ -58,6 +58,22 @@ def _token_display(token: Any) -> str:
     return str(token)
 
 
+def resolve_job_token(token: Any) -> str | bool | None:
+    """Resolve launcher auth into the concrete token form expected by run_uv_job()."""
+
+    if isinstance(token, str) and token.strip():
+        return token
+    if token is True:
+        resolved = get_token()
+        if not resolved:
+            raise RuntimeError(
+                "Requested local Hugging Face login, but no saved token was found. "
+                "Run `hf auth login` first or pass --token <hf_token>."
+            )
+        return resolved
+    return token
+
+
 def ensure_hf_auth(namespace: str, token: Any) -> None:
     """Fail early with a clear message if the local machine is not logged in."""
 
@@ -93,6 +109,7 @@ def ensure_hf_auth(namespace: str, token: Any) -> None:
 
 def launch(args: argparse.Namespace) -> None:
     ensure_hf_auth(args.namespace, args.token)
+    job_token = resolve_job_token(args.token)
     script = Path(__file__).resolve().parent / "hf_jobs_smoke.py"
     script_args = [
         "--repo-url",
@@ -137,7 +154,7 @@ def launch(args: argparse.Namespace) -> None:
         flavor=args.flavor,
         timeout=args.timeout,
         namespace=args.namespace,
-        token=args.token,
+        token=job_token,
         env={"PYTHONUNBUFFERED": "1"},
     )
     _print_job(job)
