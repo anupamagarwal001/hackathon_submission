@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-label="GRPO behavior sample showing higher reward for committee use">
+  <rect width="1200" height="720" fill="#f8fafc"/>
+  <text x="64" y="74" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="700" fill="#0f172a">GRPO Behavior Sample: Reward Prefers Committee Use</text>
+  <text x="64" y="110" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="#475569">Actual completion trace from HF job hf-job-20260426-trained-trace, trainer step 4.</text>
+
+  <rect x="64" y="144" width="508" height="438" rx="22" fill="#fff1f2" stroke="#dc2626" stroke-width="3"/>
+  <text x="92" y="198" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#dc2626">Lower-Reward Candidate</text>
+  <text x="92" y="228" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#475569">Task: mandate_drift</text>
+  <text x="92" y="274" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#dc2626">1.</text>
+  <text x="126" y="274" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#0f172a">query_risk</text>
+  <text x="92" y="328" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#dc2626">2.</text>
+  <text x="126" y="328" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#0f172a">allocate balanced_top3</text>
+  <text x="92" y="382" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#dc2626">3.</text>
+  <text x="126" y="382" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#0f172a">takes exposure before refreshing Research</text>
+  <rect x="92" y="426" width="140" height="70" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="162" y="457" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#475569">task</text>
+  <text x="162" y="486" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#0f172a">0.0119</text>
+  <rect x="246" y="426" width="140" height="70" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="316" y="457" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#475569">compliance</text>
+  <text x="316" y="486" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#0f172a">0.0044</text>
+  <rect x="400" y="426" width="140" height="70" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="470" y="457" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#475569">advantage</text>
+  <text x="470" y="486" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#0f172a">-0.7026</text>
+  <text x="92" y="536" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#475569">The model asks Risk, but still allocates before resolving</text>
+  <text x="92" y="560" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#475569">the full committee conflict.</text>
+
+  <rect x="628" y="144" width="508" height="438" rx="22" fill="#ecfdf5" stroke="#16a34a" stroke-width="3"/>
+  <text x="656" y="198" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#16a34a">Higher-Reward Candidate</text>
+  <text x="656" y="228" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#475569">Task: mandate_drift</text>
+  <text x="656" y="274" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#16a34a">1.</text>
+  <text x="690" y="274" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#0f172a">query_risk</text>
+  <text x="656" y="328" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#16a34a">2.</text>
+  <text x="690" y="328" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#0f172a">query_research</text>
+  <text x="656" y="382" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#16a34a">3.</text>
+  <text x="690" y="382" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#0f172a">collects both committee views before exposure</text>
+  <rect x="656" y="426" width="140" height="70" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="726" y="457" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#475569">task</text>
+  <text x="726" y="486" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#0f172a">0.0298</text>
+  <rect x="810" y="426" width="140" height="70" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="880" y="457" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#475569">compliance</text>
+  <text x="880" y="486" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#0f172a">0.0089</text>
+  <rect x="964" y="426" width="140" height="70" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="1034" y="457" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#475569">advantage</text>
+  <text x="1034" y="486" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#0f172a">+0.7026</text>
+  <text x="656" y="536" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#475569">The verifier assigns higher reward to using both advisors</text>
+  <text x="656" y="560" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#475569">before committing capital.</text>
+
+  <text x="64" y="660" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#475569">Scope note: this is a GRPO training-rollout sample, not a claim that the saved adapter beats the heuristic in deployment.</text>
+  <text x="64" y="690" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#475569">It shows what the reward model is reinforcing: conflict resolution through Research + Risk evidence gathering.</text>
+</svg>

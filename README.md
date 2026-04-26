@@ -36,6 +36,7 @@ The failure mode is intentionally human: a naive PM chases Research and ignores 
 | HF mini-blog | [Blog.MD](https://huggingface.co/spaces/anupamagarwal001/amc_allocator_env/blob/main/Blog.MD) |
 | Primary HF Jobs artifacts | [hf-job-20260425-070718](https://huggingface.co/datasets/anupamagarwal001/amc-allocator-job-artifacts/tree/main/hf-job-20260425-070718) |
 | 8-step comparison artifacts | [hf-job-20260425-8step](https://huggingface.co/datasets/anupamagarwal001/amc-allocator-job-artifacts/tree/main/hf-job-20260425-8step) |
+| Trained trace artifacts | [hf-job-20260426-trained-trace](https://huggingface.co/datasets/anupamagarwal001/amc-allocator-job-artifacts/tree/main/hf-job-20260426-trained-trace) |
 
 ## Try The Live Environment
 
@@ -82,6 +83,7 @@ This is a small smoke run, not a claim of convergence. The important point is th
 - TRL `GRPOTrainer`
 - LoRA adapters on `Qwen/Qwen3-0.6B`
 - exported reward/loss curves and judge-facing reports
+- exported LoRA adapter and GRPO completion traces
 
 | Evidence | Result |
 | --- | ---: |
@@ -94,6 +96,12 @@ This is a small smoke run, not a claim of convergence. The important point is th
 | Stable best step | `4` |
 
 ![Baseline score comparison](./docs/assets/baseline_score_comparison.png)
+
+The trained trace run also preserves the actual GRPO completion files and LoRA adapter. A late training sample shows the verifier assigning higher reward to a candidate that gathers both Risk and Research before taking exposure.
+
+![GRPO behavior sample](./docs/assets/grpo_behavior_sample.svg)
+
+This is intentionally scoped as training-rollout evidence. It shows what the reward model is reinforcing; it is not a claim that the saved adapter already beats the heuristic baseline in deployment.
 
 ![Smoke training reward curve](./docs/assets/reward_curve.png)
 
@@ -261,7 +269,8 @@ If you only have three minutes, open these in order:
 
 1. [Conflict snapshot](./docs/assets/conflict_resolution_snapshot.png)
 2. [Demo trace comparison](./docs/assets/demo_trace_comparison.png)
-3. [Reward curve](./docs/assets/reward_curve.png)
-4. [Loss curve](./docs/assets/loss_curve.png)
-5. [HF mini-blog](./Blog.MD)
-6. [Colab training notebook](https://colab.research.google.com/drive/1Rj7rkkYTxhoqCqmpbR5b48dOeNP5Oucw)
+3. [GRPO behavior sample](./docs/assets/grpo_behavior_sample.svg)
+4. [Reward curve](./docs/assets/reward_curve.png)
+5. [Loss curve](./docs/assets/loss_curve.png)
+6. [HF mini-blog](./Blog.MD)
+7. [Colab training notebook](https://colab.research.google.com/drive/1Rj7rkkYTxhoqCqmpbR5b48dOeNP5Oucw)

@@ -22,6 +22,14 @@ JUDGE_ARTIFACT_PATTERNS = [
     "onsite_demo_summary.md",
     "reward_series.json",
     "reward_curve.png",
+    # Keep enough trained-output evidence to inspect post-GRPO behavior.
+    "adapter_config.json",
+    "adapter_model.safetensors",
+    "chat_template.jinja",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "training_args.bin",
+    "completions/**",
 ]
 
 

@@ -53,12 +53,13 @@ Say:
 
 Show:
 
+- `grpo_behavior_sample.png`
 - `reward_curve.png`
 - `judging_report.md`
 
 Say:
 
-"We ran a verified T4 LoRA smoke training job with Qwen3-0.6B. The reward started at `0.0193` and ended at `0.0275`, with the best step at step `4`."
+"We ran a verified T4 LoRA smoke training job with Qwen3-0.6B. The reward started at `0.0193` and ended at `0.0275`, with the best step at step `4`. The preserved completion trace shows why: the verifier gives higher reward when the PM gathers both Risk and Research before taking exposure."
 
 ### Screen 5: Why it matters
 

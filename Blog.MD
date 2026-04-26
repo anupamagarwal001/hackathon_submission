@@ -123,6 +123,12 @@ Verified smoke result:
 | Reward delta | `+0.0082` |
 | Best step | `4` |
 
+We also preserved a second HF Jobs run with the LoRA adapter and raw GRPO completion traces. One late training sample shows the verifier preferring a PM candidate that calls both Risk and Research before taking exposure.
+
+![GRPO behavior sample](./docs/assets/grpo_behavior_sample.svg)
+
+This is training-rollout evidence, not a deployment claim. The point is narrower: the reward model is reinforcing the intended conflict-resolution behavior.
+
 ![Smoke training reward curve](./docs/assets/reward_curve.png)
 
 The run also logged the GRPO optimizer loss/objective. GRPO loss can cross below zero because it is not a standard supervised accuracy loss.
@@ -155,3 +161,4 @@ The project demonstrates:
 - GitHub repository: [anupamagarwal001/hackathon_submission](https://github.com/anupamagarwal001/hackathon_submission)
 - Colab notebook: [Google Colab runbook](https://colab.research.google.com/drive/1Rj7rkkYTxhoqCqmpbR5b48dOeNP5Oucw)
 - HF Jobs artifacts: [hf-job-20260425-070718](https://huggingface.co/datasets/anupamagarwal001/amc-allocator-job-artifacts/tree/main/hf-job-20260425-070718)
+- Trained trace artifacts: [hf-job-20260426-trained-trace](https://huggingface.co/datasets/anupamagarwal001/amc-allocator-job-artifacts/tree/main/hf-job-20260426-trained-trace)

@@ -432,6 +432,98 @@ def generate_trace_comparison() -> Path:
     return path
 
 
+def generate_grpo_behavior_sample() -> Path:
+    image = Image.new("RGB", (WIDTH, HEIGHT), "#f8fafc")
+    draw = ImageDraw.Draw(image)
+
+    draw.text((64, 36), "GRPO Behavior Sample: Reward Prefers Committee Use", font=BIG_FONT, fill=TEXT)
+    draw.text(
+        (64, 90),
+        "Actual completion trace from HF job hf-job-20260426-trained-trace, trainer step 4.",
+        font=BODY_FONT,
+        fill=AXIS,
+    )
+
+    card_y = 144
+    card_h = 438
+    card_w = 508
+    left_x = 64
+    right_x = 628
+
+    def card(
+        x: int,
+        title: str,
+        border: str,
+        bg: str,
+        steps: list[str],
+        metrics: list[tuple[str, str]],
+        takeaway: str,
+    ) -> None:
+        draw.rounded_rectangle((x, card_y, x + card_w, card_y + card_h), radius=22, fill=bg, outline=border, width=3)
+        draw.text((x + 28, card_y + 28), title, font=MID_FONT, fill=border)
+        draw.text((x + 28, card_y + 66), "Task: mandate_drift", font=SMALL_FONT, fill=AXIS)
+
+        y = card_y + 112
+        for idx, step in enumerate(steps, start=1):
+            draw.text((x + 28, y), f"{idx}.", font=COMPACT_BODY_FONT, fill=border)
+            draw_wrapped(draw, (x + 62, y - 2), step, COMPACT_BODY_FONT, fill=TEXT, max_width=410, line_gap=4)
+            y += 54
+
+        metric_y = card_y + 282
+        metric_w = 140
+        for idx, (label, value) in enumerate(metrics):
+            mx = x + 28 + idx * (metric_w + 14)
+            draw.rounded_rectangle((mx, metric_y, mx + metric_w, metric_y + 70), radius=14, fill="white", outline="#cbd5e1", width=2)
+            draw_centered(draw, (mx, metric_y + 10, mx + metric_w, metric_y + 34), label, SMALL_FONT, fill=AXIS)
+            draw_centered(draw, (mx, metric_y + 34, mx + metric_w, metric_y + 64), value, COMPACT_BODY_FONT, fill=TEXT)
+
+        draw_wrapped(draw, (x + 28, card_y + 374), takeaway, SMALL_FONT, fill=AXIS, max_width=450, line_gap=4)
+
+    card(
+        left_x,
+        "Lower-Reward Candidate",
+        RED,
+        "#fff1f2",
+        [
+            "query_risk",
+            "allocate balanced_top3",
+            "takes exposure before refreshing Research",
+        ],
+        [("task", "0.0119"), ("compliance", "0.0044"), ("advantage", "-0.7026")],
+        "The model asks Risk, but still allocates before resolving the full committee conflict.",
+    )
+    card(
+        right_x,
+        "Higher-Reward Candidate",
+        GREEN,
+        "#ecfdf5",
+        [
+            "query_risk",
+            "query_research",
+            "collects both committee views before exposure",
+        ],
+        [("task", "0.0298"), ("compliance", "0.0089"), ("advantage", "+0.7026")],
+        "The verifier assigns higher reward to using both advisors before committing capital.",
+    )
+
+    draw.text(
+        (64, HEIGHT - 78),
+        "Scope note: this is a GRPO training-rollout sample, not a claim that the saved adapter beats the heuristic in deployment.",
+        font=SMALL_FONT,
+        fill=AXIS,
+    )
+    draw.text(
+        (64, HEIGHT - 48),
+        "It shows what the reward model is reinforcing: conflict resolution through Research + Risk evidence gathering.",
+        font=SMALL_FONT,
+        fill=AXIS,
+    )
+
+    path = OUTPUT_DIR / "grpo_behavior_sample.png"
+    image.save(path)
+    return path
+
+
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     reward_path = generate_reward_curve()
@@ -439,11 +531,13 @@ def main() -> None:
     baseline_path = generate_baseline_chart()
     conflict_path = generate_conflict_snapshot()
     trace_path = generate_trace_comparison()
+    grpo_path = generate_grpo_behavior_sample()
     print(f"wrote {reward_path}")
     print(f"wrote {loss_path}")
     print(f"wrote {baseline_path}")
     print(f"wrote {conflict_path}")
     print(f"wrote {trace_path}")
+    print(f"wrote {grpo_path}")
 
 
 if __name__ == "__main__":
