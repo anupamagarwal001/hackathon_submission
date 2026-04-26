@@ -30,7 +30,7 @@ The failure mode is intentionally human: a naive PM chases Research and ignores 
 | Deliverable | Link |
 | --- | --- |
 | Hugging Face Space | [anupamagarwal001/amc_allocator_env](https://huggingface.co/spaces/anupamagarwal001/amc_allocator_env) |
-| Live app | [anupamagarwal001-amc-allocator-env.hf.space](https://anupamagarwal001-amc-allocator-env.hf.space) |
+| Live app | [anupamagarwal001-amc-allocator-env.hf.space/web](https://anupamagarwal001-amc-allocator-env.hf.space/web) |
 | Public code repository | [anupamagarwal001/hackathon_submission](https://github.com/anupamagarwal001/hackathon_submission) |
 | Colab training notebook | [Google Colab runbook](https://colab.research.google.com/drive/1Rj7rkkYTxhoqCqmpbR5b48dOeNP5Oucw) |
 | HF mini-blog | [Blog.MD](https://huggingface.co/spaces/anupamagarwal001/amc_allocator_env/blob/main/Blog.MD) |
