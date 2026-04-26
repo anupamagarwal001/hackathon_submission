@@ -8,7 +8,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 OUTPUT_DIR = Path(__file__).resolve().parents[1] / "docs" / "assets"
 
-REWARD_SERIES = [0.019333332777023315, 0.0160, 0.0006, 0.027521273121237755]
+REWARD_SERIES = [0.019333332777023315, 0.01599554717540741, 0.000563124951440841, 0.027521273121237755]
+LOSS_SERIES = [0.36607930064201355, 0.4380803406238556, 0.0, -0.07474987953901291]
 BASELINE_SCORE = {
     "heuristic": 0.4084,
     "random": 0.2504,
@@ -17,7 +18,7 @@ BASELINE_SCORE = {
 WIDTH = 1200
 HEIGHT = 720
 PADDING_LEFT = 140
-PADDING_RIGHT = 60
+PADDING_RIGHT = 120
 PADDING_TOP = 90
 PADDING_BOTTOM = 110
 BG = "white"
@@ -108,8 +109,10 @@ def generate_reward_curve() -> Path:
     draw = ImageDraw.Draw(image)
     x0, y0, x1, y1 = draw_axes(draw)
 
-    title = "Smoke Training Reward Curve (Colab T4, Qwen3-0.6B, LoRA, 4 steps)"
+    title = "Smoke Training Reward Curve"
+    subtitle = "HF Jobs/Colab T4, Qwen3-0.6B, LoRA, 4 trainer steps"
     draw.text((PADDING_LEFT, 24), title, font=TITLE_FONT, fill=TEXT)
+    draw.text((PADDING_LEFT, 62), subtitle, font=BODY_FONT, fill=AXIS)
 
     min_value = min(REWARD_SERIES)
     max_value = max(REWARD_SERIES)
@@ -142,13 +145,70 @@ def generate_reward_curve() -> Path:
         color = GREEN if idx == len(points) - 1 else RED if idx == 2 else BLUE
         draw.ellipse((x - 7, y - 7, x + 7, y + 7), fill=color, outline="white", width=2)
         value = f"{REWARD_SERIES[idx]:.4f}"
-        draw.text((x + 10, y - 26), value, font=SMALL_FONT, fill=TEXT)
+        label_x = x + 10 if idx < len(points) - 1 else x - 74
+        draw.text((label_x, y - 26), value, font=SMALL_FONT, fill=TEXT)
 
     draw_centered(draw, (x0, HEIGHT - 60, x1, HEIGHT - 20), "training step", LABEL_FONT)
-    draw.text((28, (y1 + y0) / 2), "reward", font=LABEL_FONT, fill=TEXT)
     draw.text((PADDING_LEFT, HEIGHT - 36), "Verified smoke run from the Colab T4 execution used in the on-site demo.", font=SMALL_FONT, fill=AXIS)
 
     path = OUTPUT_DIR / "reward_curve.png"
+    image.save(path)
+    return path
+
+
+def generate_loss_curve() -> Path:
+    image = Image.new("RGB", (WIDTH, HEIGHT), BG)
+    draw = ImageDraw.Draw(image)
+    x0, y0, x1, y1 = draw_axes(draw)
+
+    title = "GRPO Training Loss / Objective"
+    subtitle = "HF Jobs T4, Qwen3-0.6B, LoRA, 4 trainer steps. Objective-style loss can cross below zero."
+    draw.text((PADDING_LEFT, 24), title, font=TITLE_FONT, fill=TEXT)
+    draw.text((PADDING_LEFT, 62), subtitle, font=BODY_FONT, fill=AXIS)
+
+    y_min = min(LOSS_SERIES) - 0.08
+    y_max = max(LOSS_SERIES) + 0.08
+
+    for idx in range(5):
+        frac = idx / 4
+        y = y0 - frac * (y0 - y1)
+        value = y_min + frac * (y_max - y_min)
+        draw.line((x0, y, x1, y), fill=GRID, width=1)
+        label = f"{value:.2f}"
+        bbox = draw.textbbox((0, 0), label, font=TICK_FONT)
+        draw.text((x0 - 20 - (bbox[2] - bbox[0]), y - 10), label, font=TICK_FONT, fill=TEXT)
+
+    zero_y = y0 - ((0 - y_min) / (y_max - y_min)) * (y0 - y1)
+    if y1 <= zero_y <= y0:
+        draw.line((x0, zero_y, x1, zero_y), fill="#94a3b8", width=2)
+        draw.text((x1 - 104, zero_y - 28), "zero", font=SMALL_FONT, fill=AXIS)
+
+    step_gap = (x1 - x0) / (len(LOSS_SERIES) - 1)
+    points: list[tuple[float, float]] = []
+    for idx, value in enumerate(LOSS_SERIES):
+        x = x0 + idx * step_gap
+        y = y0 - ((value - y_min) / (y_max - y_min)) * (y0 - y1)
+        points.append((x, y))
+        draw.line((x, y0, x, y0 + 8), fill=AXIS, width=2)
+        label = str(idx + 1)
+        bbox = draw.textbbox((0, 0), label, font=TICK_FONT)
+        draw.text((x - (bbox[2] - bbox[0]) / 2, y0 + 16), label, font=TICK_FONT, fill=TEXT)
+
+    draw.line(points, fill=RED, width=6)
+    for idx, (x, y) in enumerate(points):
+        color = GREEN if idx == len(points) - 1 else RED
+        draw.ellipse((x - 7, y - 7, x + 7, y + 7), fill=color, outline="white", width=2)
+        value = f"{LOSS_SERIES[idx]:.3f}"
+        if idx < len(points) - 1:
+            label_x, label_y = x + 10, y - 26
+        else:
+            label_x, label_y = x - 96, y - 34
+        draw.text((label_x, label_y), value, font=SMALL_FONT, fill=TEXT)
+
+    draw_centered(draw, (x0, HEIGHT - 60, x1, HEIGHT - 20), "training step", LABEL_FONT)
+    draw.text((PADDING_LEFT, HEIGHT - 36), "Metric copied from the real HF Jobs trainer log for the same smoke run.", font=SMALL_FONT, fill=AXIS)
+
+    path = OUTPUT_DIR / "loss_curve.png"
     image.save(path)
     return path
 
@@ -189,8 +249,6 @@ def generate_baseline_chart() -> Path:
         label_bbox = draw.textbbox((0, 0), label, font=LABEL_FONT)
         draw.text((left + (bar_width - (label_bbox[2] - label_bbox[0])) / 2, y0 + 18), label, font=LABEL_FONT, fill=TEXT)
 
-    draw_centered(draw, (x0, HEIGHT - 60, x1, HEIGHT - 20), "policy", LABEL_FONT)
-    draw.text((28, (y1 + y0) / 2), "overall score (0-1)", font=LABEL_FONT, fill=TEXT)
     draw.text((PADDING_LEFT, HEIGHT - 36), "Numbers come from the verified multi-seed baseline snapshot embedded in the Colab notebook.", font=SMALL_FONT, fill=AXIS)
 
     path = OUTPUT_DIR / "baseline_score_comparison.png"
@@ -281,9 +339,11 @@ def generate_conflict_snapshot() -> Path:
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     reward_path = generate_reward_curve()
+    loss_path = generate_loss_curve()
     baseline_path = generate_baseline_chart()
     conflict_path = generate_conflict_snapshot()
     print(f"wrote {reward_path}")
+    print(f"wrote {loss_path}")
     print(f"wrote {baseline_path}")
     print(f"wrote {conflict_path}")
 
