@@ -16,7 +16,7 @@ The target behavior is different: query both agents, reduce concentration, prese
 
 The environment scores this with multiple verifier-style rewards: task score, compliance quality, risk response, and information usage. That makes the reward harder to game than a single return-only score.
 
-In our verified 4-step GRPO smoke run with Qwen3-0.6B and LoRA, reward improved from `0.0193` to `0.0275`. We also ran an 8-step comparison and saw it regress after step `4`, so we use the 4-step run as the stable demonstrated configuration.
+In our verified 4-step GRPO smoke run with Qwen3-0.6B and LoRA, reward improved from `0.0193` to `0.0275`. We also preserved the completion traces: a higher-reward late sample queries both Risk and Research before taking exposure, while a lower-reward sample allocates too early. We also ran an 8-step comparison and saw it regress after step `4`, so we use the 4-step run as the stable demonstrated configuration.
 
 This is not a trading system. It is a benchmark for whether LLM agents can learn conflict-aware professional decision-making under partial information.
 
@@ -64,7 +64,7 @@ So our contribution is not just a stock simulator. It is a realistic, trainable 
 
 If you want to use the concrete verified smoke numbers in the pitch, replace the training paragraph with this:
 
-"For training, we keep the Analyst and Risk Officer fixed and train only the Portfolio Manager using a minimal HF TRL plus LoRA pipeline. On a verified T4 Colab smoke run with Qwen3-0.6B, our baseline heuristic scored `0.4084` overall versus `0.2504` for random. In training, the reward started at `0.0193` and ended at `0.0275`, with the best step at step `4`. That gives us a clean positive reward delta in a short on-site-friendly run."
+"For training, we keep the Analyst and Risk Officer fixed and train only the Portfolio Manager using a minimal HF TRL plus LoRA pipeline. On a verified T4 smoke run with Qwen3-0.6B, our baseline heuristic scored `0.4084` overall versus `0.2504` for random. In training, the reward started at `0.0193` and ended at `0.0275`, with the best step at step `4`. The preserved completion trace shows the verifier preferring a PM candidate that queries both Risk and Research before exposure. That gives us a clean positive reward delta plus a concrete behavior sample in a short on-site-friendly run."
 
 ## 2-Minute Backup Version
 
