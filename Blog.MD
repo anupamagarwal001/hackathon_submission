@@ -52,6 +52,10 @@ Target PM:
 
 That is the capability gap: not "can the model pick a stock?", but "can the model make a disciplined decision when two advisors disagree?"
 
+The demo trace makes this concrete:
+
+![Demo trace comparison](./docs/assets/demo_trace_comparison.png)
+
 ## Task ladder
 
 The environment has four deterministic tasks:

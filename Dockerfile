@@ -29,6 +29,7 @@ COPY --from=builder /app/env /app/env
 
 ENV PATH="/app/env/.venv/bin:$PATH"
 ENV PYTHONPATH="/app/env"
+ENV ENABLE_WEB_INTERFACE=true
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:7860/health || exit 1

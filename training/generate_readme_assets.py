@@ -340,16 +340,110 @@ def generate_conflict_snapshot() -> Path:
     return path
 
 
+def generate_trace_comparison() -> Path:
+    image = Image.new("RGB", (WIDTH, HEIGHT), "#f8fafc")
+    draw = ImageDraw.Draw(image)
+
+    draw.text((64, 36), "Demo Trace: Random PM vs Heuristic PM", font=BIG_FONT, fill=TEXT)
+    draw.text(
+        (64, 90),
+        "research_risk_conflict task, seed=7. Same environment; different decision discipline.",
+        font=BODY_FONT,
+        fill=AXIS,
+    )
+
+    card_y = 140
+    card_h = 480
+    card_w = 508
+    left_x = 64
+    right_x = 628
+
+    def card(
+        x: int,
+        title: str,
+        subtitle: str,
+        border: str,
+        bg: str,
+        lines: list[str],
+        score: str,
+        violations: str,
+        takeaway: str,
+    ) -> None:
+        draw.rounded_rectangle((x, card_y, x + card_w, card_y + card_h), radius=22, fill=bg, outline=border, width=3)
+        draw.text((x + 28, card_y + 28), title, font=MID_FONT, fill=border)
+        draw.text((x + 28, card_y + 66), subtitle, font=SMALL_FONT, fill=AXIS)
+
+        y = card_y + 112
+        for idx, line in enumerate(lines, start=1):
+            draw.text((x + 28, y), f"Step {idx}", font=SMALL_FONT, fill=border)
+            draw_wrapped(draw, (x + 116, y - 2), line, COMPACT_BODY_FONT, fill=TEXT, max_width=350, line_gap=4)
+            y += 58
+
+        metric_y = card_y + 350
+        draw.rounded_rectangle((x + 28, metric_y, x + 222, metric_y + 56), radius=14, fill="white", outline="#cbd5e1", width=2)
+        draw.text((x + 48, metric_y + 12), f"Score: {score}", font=COMPACT_BODY_FONT, fill=TEXT)
+        draw.rounded_rectangle((x + 242, metric_y, x + 480, metric_y + 56), radius=14, fill="white", outline="#cbd5e1", width=2)
+        draw.text((x + 262, metric_y + 12), f"Violations: {violations}", font=COMPACT_BODY_FONT, fill=TEXT)
+
+        draw_wrapped(draw, (x + 28, card_y + 424), takeaway, SMALL_FONT, fill=AXIS, max_width=450, line_gap=4)
+
+    card(
+        left_x,
+        "Random PM",
+        "No committee discipline",
+        RED,
+        "#fff1f2",
+        [
+            "allocate top2_conviction before reading the committee",
+            "query_research randomly",
+            "hold without a clear risk response",
+            "query_risk randomly after exposure is already live",
+        ],
+        "0.2622",
+        "9",
+        "Takeaway: action order is noisy; conflict is mostly accidental.",
+    )
+    card(
+        right_x,
+        "Heuristic PM",
+        "Committee-aware baseline",
+        GREEN,
+        "#ecfdf5",
+        [
+            "query_research on the sector first",
+            "hold until the signal/risk mix is clearer",
+            "allocate balanced_top3 instead of all-in conviction",
+            "move_to_cash when risk pressure rises",
+        ],
+        "0.4071",
+        "3",
+        "Takeaway: still imperfect, but visibly more disciplined.",
+    )
+
+    draw.text(
+        (64, HEIGHT - 48),
+        "Training evidence is separate: the GRPO smoke run improves verifier reward from 0.0193 to 0.0275.",
+        font=SMALL_FONT,
+        fill=AXIS,
+    )
+
+    path = OUTPUT_DIR / "demo_trace_comparison.png"
+    image.save(path)
+    return path
+
+
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     reward_path = generate_reward_curve()
     loss_path = generate_loss_curve()
     baseline_path = generate_baseline_chart()
     conflict_path = generate_conflict_snapshot()
+    trace_path = generate_trace_comparison()
     print(f"wrote {reward_path}")
     print(f"wrote {loss_path}")
     print(f"wrote {baseline_path}")
     print(f"wrote {conflict_path}")
+    print(f"wrote {trace_path}")
 
 
 if __name__ == "__main__":
