@@ -97,7 +97,7 @@ This is a small smoke run, not a claim of convergence. The important point is th
 
 ![Baseline score comparison](./docs/assets/baseline_score_comparison.png)
 
-### What RL Is Learning From Actual Training Traces
+### What RL is learning (from actual training traces)
 
 The trained trace run also preserves the actual GRPO completion files and LoRA adapter. A late training sample shows the verifier assigning higher reward to a candidate that gathers both Risk and Research before taking exposure.
 

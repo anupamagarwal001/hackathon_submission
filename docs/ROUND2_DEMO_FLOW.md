@@ -53,7 +53,7 @@ Say:
 
 Show:
 
-- `grpo_behavior_sample.png`
+- `grpo_behavior_sample.svg`
 - `reward_curve.png`
 - `judging_report.md`
 
