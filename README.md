@@ -37,6 +37,26 @@ The failure mode is intentionally human: a naive PM chases Research and ignores 
 | Primary HF Jobs artifacts | [hf-job-20260425-070718](https://huggingface.co/datasets/anupamagarwal001/amc-allocator-job-artifacts/tree/main/hf-job-20260425-070718) |
 | 8-step comparison artifacts | [hf-job-20260425-8step](https://huggingface.co/datasets/anupamagarwal001/amc-allocator-job-artifacts/tree/main/hf-job-20260425-8step) |
 
+## Try The Live Environment
+
+The Space exposes both a visual OpenEnv playground and the raw API:
+
+1. Open the live app at [`/web`](https://anupamagarwal001-amc-allocator-env.hf.space/web), then click **Reset**.
+2. Try one action in the form, for example `action_type=query_research`, `query_target=SECTOR`, then click **Step**.
+3. If the playground is unavailable, use the Swagger fallback at [`/docs`](https://anupamagarwal001-amc-allocator-env.hf.space/docs): call `POST /reset`, then `POST /step`.
+
+Sample `POST /step` body:
+
+```json
+{
+  "action": {
+    "action_type": "query_research",
+    "query_target": "SECTOR",
+    "reason": "Demo: get the committee research view before allocating."
+  }
+}
+```
+
 ## The One-Screen Story
 
 The benchmark exposes when a Portfolio Manager blindly follows Research while Risk is warning that the mandate is under pressure.
@@ -44,6 +64,14 @@ The benchmark exposes when a Portfolio Manager blindly follows Research while Ri
 ![Conflict resolution snapshot](./docs/assets/conflict_resolution_snapshot.png)
 
 **Falsifiable claim:** this environment measures whether verifier-driven RL can improve conflict-aware PM behavior. In a verified HF Jobs/Colab smoke run, reward improved from `0.0193` to `0.0275` over the stable 4-step config.
+
+## What The Agent Does In A Run
+
+The clearest visible behavior difference is between a random PM and a committee-aware heuristic PM on the same conflict task.
+
+![Demo trace comparison](./docs/assets/demo_trace_comparison.png)
+
+This is baseline behavior, not a claim that the trained policy beats the heuristic. The trained evidence is the GRPO reward signal shown below.
 
 ## What Changed After Training?
 
@@ -232,7 +260,8 @@ amc_allocator_env/
 If you only have three minutes, open these in order:
 
 1. [Conflict snapshot](./docs/assets/conflict_resolution_snapshot.png)
-2. [Reward curve](./docs/assets/reward_curve.png)
-3. [Loss curve](./docs/assets/loss_curve.png)
-4. [HF mini-blog](./Blog.MD)
-5. [Colab training notebook](https://colab.research.google.com/drive/1Rj7rkkYTxhoqCqmpbR5b48dOeNP5Oucw)
+2. [Demo trace comparison](./docs/assets/demo_trace_comparison.png)
+3. [Reward curve](./docs/assets/reward_curve.png)
+4. [Loss curve](./docs/assets/loss_curve.png)
+5. [HF mini-blog](./Blog.MD)
+6. [Colab training notebook](https://colab.research.google.com/drive/1Rj7rkkYTxhoqCqmpbR5b48dOeNP5Oucw)
