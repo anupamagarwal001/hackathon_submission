@@ -20,7 +20,7 @@ HEIGHT = 720
 PADDING_LEFT = 140
 PADDING_RIGHT = 120
 PADDING_TOP = 90
-PADDING_BOTTOM = 110
+PADDING_BOTTOM = 140
 BG = "white"
 TEXT = "#0f172a"
 AXIS = "#475569"
@@ -49,6 +49,7 @@ TITLE_FONT = load_font(34, bold=True)
 LABEL_FONT = load_font(24)
 TICK_FONT = load_font(20)
 BODY_FONT = load_font(22)
+COMPACT_BODY_FONT = load_font(20)
 SMALL_FONT = load_font(18)
 BIG_FONT = load_font(42, bold=True)
 MID_FONT = load_font(28, bold=True)
@@ -148,8 +149,8 @@ def generate_reward_curve() -> Path:
         label_x = x + 10 if idx < len(points) - 1 else x - 74
         draw.text((label_x, y - 26), value, font=SMALL_FONT, fill=TEXT)
 
-    draw_centered(draw, (x0, HEIGHT - 60, x1, HEIGHT - 20), "training step", LABEL_FONT)
-    draw.text((PADDING_LEFT, HEIGHT - 36), "Verified smoke run from the Colab T4 execution used in the on-site demo.", font=SMALL_FONT, fill=AXIS)
+    draw_centered(draw, (x0, HEIGHT - 90, x1, HEIGHT - 56), "training step", LABEL_FONT)
+    draw.text((PADDING_LEFT, HEIGHT - 34), "Verified smoke run from the Colab T4 execution used in the on-site demo.", font=SMALL_FONT, fill=AXIS)
 
     path = OUTPUT_DIR / "reward_curve.png"
     image.save(path)
@@ -205,8 +206,8 @@ def generate_loss_curve() -> Path:
             label_x, label_y = x - 96, y - 34
         draw.text((label_x, label_y), value, font=SMALL_FONT, fill=TEXT)
 
-    draw_centered(draw, (x0, HEIGHT - 60, x1, HEIGHT - 20), "training step", LABEL_FONT)
-    draw.text((PADDING_LEFT, HEIGHT - 36), "Metric copied from the real HF Jobs trainer log for the same smoke run.", font=SMALL_FONT, fill=AXIS)
+    draw_centered(draw, (x0, HEIGHT - 90, x1, HEIGHT - 56), "training step", LABEL_FONT)
+    draw.text((PADDING_LEFT, HEIGHT - 34), "Metric copied from the real HF Jobs trainer log for the same smoke run.", font=SMALL_FONT, fill=AXIS)
 
     path = OUTPUT_DIR / "loss_curve.png"
     image.save(path)
@@ -301,27 +302,30 @@ def generate_conflict_snapshot() -> Path:
         draw.text((x0 + 24, y0 + 24), title, font=MID_FONT, fill=accent)
         draw_wrapped(draw, (x0 + 24, y0 + 78), body, BODY_FONT, fill=TEXT, max_width=panel_w - 48)
 
-    lower_y = 462
-    draw.rounded_rectangle((64, lower_y, 556, 640), radius=18, fill="white", outline=RED, width=3)
+    lower_y = 456
+    lower_bottom = 652
+    draw.rounded_rectangle((64, lower_y, 556, lower_bottom), radius=18, fill="white", outline=RED, width=3)
     draw.text((92, lower_y + 26), "Failure Mode: Ignoring Risk", font=MID_FONT, fill=RED)
     draw_wrapped(
         draw,
         (92, lower_y + 78),
         "Baseline PM chases the buy signal, violates constraints, and loses reward to compliance and drawdown penalties.",
-        BODY_FONT,
+        COMPACT_BODY_FONT,
         fill=TEXT,
-        max_width=420,
+        max_width=430,
+        line_gap=6,
     )
 
-    draw.rounded_rectangle((644, lower_y, 1136, 640), radius=18, fill="white", outline=GREEN, width=3)
+    draw.rounded_rectangle((644, lower_y, 1136, lower_bottom), radius=18, fill="white", outline=GREEN, width=3)
     draw.text((672, lower_y + 26), "Target Behavior: Resolve Conflict", font=MID_FONT, fill=GREEN)
     draw_wrapped(
         draw,
         (672, lower_y + 78),
-        "The environment rewards balanced decisions: use Research, respect Risk, reduce concentration, and preserve return signal.",
-        BODY_FONT,
+        "The environment rewards balanced decisions: use Research, respect Risk, reduce concentration, preserve return signal.",
+        COMPACT_BODY_FONT,
         fill=TEXT,
-        max_width=420,
+        max_width=430,
+        line_gap=6,
     )
 
     draw.text(
