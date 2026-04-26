@@ -125,7 +125,7 @@ Verified smoke result:
 
 We also preserved a second HF Jobs run with the LoRA adapter and raw GRPO completion traces. One late training sample shows the verifier preferring a PM candidate that calls both Risk and Research before taking exposure.
 
-![GRPO behavior sample](./docs/assets/grpo_behavior_sample.png)
+![GRPO behavior sample](./docs/assets/grpo_behavior_sample.svg)
 
 This is training-rollout evidence, not a deployment claim. The point is narrower: the reward model is reinforcing the intended conflict-resolution behavior.
 
