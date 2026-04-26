@@ -123,6 +123,8 @@ Verified smoke result:
 | Reward delta | `+0.0082` |
 | Best step | `4` |
 
+### What RL Is Learning From Actual Training Traces
+
 We also preserved a second HF Jobs run with the LoRA adapter and raw GRPO completion traces. One late training sample shows the verifier preferring a PM candidate that calls both Risk and Research before taking exposure.
 
 ![GRPO behavior sample](./docs/assets/grpo_behavior_sample.svg)
