@@ -33,7 +33,7 @@ The failure mode is intentionally human: a naive PM chases Research and ignores 
 | Live app | [anupamagarwal001-amc-allocator-env.hf.space/web](https://anupamagarwal001-amc-allocator-env.hf.space/web) |
 | Public code repository | [anupamagarwal001/hackathon_submission](https://github.com/anupamagarwal001/hackathon_submission) |
 | Colab training notebook | [Google Colab runbook](https://colab.research.google.com/drive/1Rj7rkkYTxhoqCqmpbR5b48dOeNP5Oucw) |
-| HF mini-blog | [Blog.MD](https://huggingface.co/spaces/anupamagarwal001/amc_allocator_env/blob/main/Blog.MD) |
+| HF mini-blog | [Blog.md](https://huggingface.co/spaces/anupamagarwal001/amc_allocator_env/blob/main/Blog.md) |
 | Primary HF Jobs artifacts | [hf-job-20260425-070718](https://huggingface.co/datasets/anupamagarwal001/amc-allocator-job-artifacts/tree/main/hf-job-20260425-070718) |
 | 8-step comparison artifacts | [hf-job-20260425-8step](https://huggingface.co/datasets/anupamagarwal001/amc-allocator-job-artifacts/tree/main/hf-job-20260425-8step) |
 | Trained trace artifacts | [hf-job-20260426-trained-trace](https://huggingface.co/datasets/anupamagarwal001/amc-allocator-job-artifacts/tree/main/hf-job-20260426-trained-trace) |
@@ -179,6 +179,20 @@ reward
 
 This makes the verifier harder to game. A PM cannot win by always going to cash, blindly maximizing return, or spamming queries. The score only improves when the agent balances return, information usage, risk response, and mandate discipline.
 
+## Reward Hacking Considerations
+
+Mitigation design:
+- The reward is multi-objective, so return alone is not enough to score well.
+- Drawdown, compliance breaches, transaction costs, and query costs create explicit penalties.
+- Partial observability and query budgets force the PM to gather useful committee information.
+
+Known failure modes:
+- A policy may become over-conservative and move to cash too often.
+- A policy may learn minimal-compliance behavior instead of true conflict resolution.
+- Short smoke training can still bias toward near-term reward.
+
+Reward hacking is a known RL problem, and this environment does not claim to eliminate it. The benchmark is designed to expose these trade-offs through separate return, compliance, information-usage, and risk-response metrics.
+
 ## Training Surface
 
 The training setup intentionally trains only one role:
@@ -199,7 +213,7 @@ Core training files:
 
 Judge-facing runbooks:
 
-- [`Blog.MD`](./Blog.MD)
+- [`Blog.md`](./Blog.md)
 - [`docs/ROUND2_DEMO_FLOW.md`](./docs/ROUND2_DEMO_FLOW.md)
 - [`docs/ROUND2_TRAINING_RUNBOOK.md`](./docs/ROUND2_TRAINING_RUNBOOK.md)
 - [`docs/ROUND2_PITCH_SCRIPT.md`](./docs/ROUND2_PITCH_SCRIPT.md)
@@ -251,7 +265,7 @@ openenv validate --url http://localhost:8000
 
 ```text
 amc_allocator_env/
-├── Blog.MD
+├── Blog.md
 ├── README.md
 ├── inference.py
 ├── models.py
@@ -274,5 +288,5 @@ If you only have three minutes, open these in order:
 3. [GRPO behavior sample](./docs/assets/grpo_behavior_sample.svg)
 4. [Reward curve](./docs/assets/reward_curve.png)
 5. [Loss curve](./docs/assets/loss_curve.png)
-6. [HF mini-blog](./Blog.MD)
+6. [HF mini-blog](./Blog.md)
 7. [Colab training notebook](https://colab.research.google.com/drive/1Rj7rkkYTxhoqCqmpbR5b48dOeNP5Oucw)

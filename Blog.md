@@ -89,6 +89,20 @@ reward
 
 This matters because a single return-only score is easy to game. A PM that goes all-in on Research can look good briefly but fail the committee task. A PM that always goes to cash avoids risk but fails to use opportunity. The reward is designed to favor balanced professional behavior.
 
+## Reward Hacking Considerations
+
+Mitigation design:
+- The reward is multi-objective, so return alone is not enough to score well.
+- Drawdown, compliance breaches, transaction costs, and query costs create explicit penalties.
+- Partial observability and query budgets force the PM to gather useful committee information.
+
+Known failure modes:
+- A policy may become over-conservative and move to cash too often.
+- A policy may learn minimal-compliance behavior instead of true conflict resolution.
+- Short smoke training can still bias toward near-term reward.
+
+Reward hacking is a known RL problem, and this environment does not claim to eliminate it. The benchmark is designed to expose these trade-offs through separate return, compliance, information-usage, and risk-response metrics.
+
 ## Baselines
 
 Before training, we compare a random PM against a heuristic PM.
