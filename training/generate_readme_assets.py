@@ -12,7 +12,7 @@ REWARD_SERIES = [0.019333332777023315, 0.01599554717540741, 0.000563124951440841
 LOSS_SERIES = [0.36607930064201355, 0.4380803406238556, 0.0, -0.07474987953901291]
 BASELINE_SCORE = {
     "heuristic": 0.4084,
-    "random": 0.2504,
+    "random": 0.2325,
 }
 
 WIDTH = 1200
@@ -399,7 +399,7 @@ def generate_trace_comparison() -> Path:
             "hold without a clear risk response",
             "query_risk randomly after exposure is already live",
         ],
-        "0.2622",
+        "0.2000",
         "9",
         "Takeaway: action order is noisy; conflict is mostly accidental.",
     )

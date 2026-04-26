@@ -29,6 +29,13 @@ def test_heuristic_beats_random_on_all_tasks() -> None:
         assert heuristic_report.score > random_report.score
 
 
+def test_reward_hacking_probes_do_not_beat_heuristic() -> None:
+    heuristic_report = run_episode("research_risk_conflict", "heuristic", seed=7)
+    for policy_name in ("always_cash", "concentrated_alpha", "query_spam"):
+        probe_report = run_episode("research_risk_conflict", policy_name, seed=7)
+        assert probe_report.score < heuristic_report.score
+
+
 def test_run_episode_emits_required_structured_events() -> None:
     events: list[tuple[str, dict[str, object]]] = []
 

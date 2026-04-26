@@ -101,7 +101,14 @@ def main() -> None:
     parser.add_argument(
         "--policy",
         default="heuristic",
-        choices=["random", "heuristic", "llm"],
+        choices=[
+            "random",
+            "heuristic",
+            "llm",
+            "always_cash",
+            "concentrated_alpha",
+            "query_spam",
+        ],
         help="Policy to evaluate.",
     )
     parser.add_argument(

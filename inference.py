@@ -190,7 +190,15 @@ def main() -> None:
     parser.add_argument(
         "--policy",
         default=None,
-        choices=["heuristic", "random", "llm", "all"],
+        choices=[
+            "heuristic",
+            "random",
+            "llm",
+            "all",
+            "always_cash",
+            "concentrated_alpha",
+            "query_spam",
+        ],
         help="Policy to evaluate. Defaults to llm when API_KEY is injected, otherwise heuristic.",
     )
     parser.add_argument(

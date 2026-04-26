@@ -103,13 +103,22 @@ Known failure modes:
 
 Reward hacking is a known RL problem, and this environment does not claim to eliminate it. The benchmark is designed to expose these trade-offs through separate return, compliance, information-usage, and risk-response metrics.
 
+Anti-hack probe results:
+
+| Probe policy | Overall score | What it tries | Why it fails |
+| --- | ---: | --- | --- |
+| `always_cash` | `0.2000` | Avoid all drawdown and compliance risk | Capped for no investment or information usage |
+| `query_spam` | `0.2000` | Spend query budget instead of deciding | Capped for no portfolio action or risk response |
+| `concentrated_alpha` | `0.3033` | Chase return with maximum concentration | Loses all compliance credit |
+| `heuristic` | `0.4084` | Balance Research, Risk, and allocation | Uses information and accepts measured risk |
+
 ## Baselines
 
 Before training, we compare a random PM against a heuristic PM.
 
 | Policy | Overall score | Return | Max drawdown | Information usage |
 | --- | ---: | ---: | ---: | ---: |
-| Random | `0.2504` | `-0.0061` | `0.0209` | `0.0436` |
+| Random | `0.2325` | `-0.0061` | `0.0209` | `0.0436` |
 | Heuristic | `0.4084` | `0.0217` | `0.0153` | `0.2716` |
 
 ![Baseline score comparison](./docs/assets/baseline_score_comparison.png)

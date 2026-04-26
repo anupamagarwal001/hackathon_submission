@@ -88,8 +88,8 @@ This is a small smoke run, not a claim of convergence. The important point is th
 | Evidence | Result |
 | --- | ---: |
 | Heuristic PM overall score | `0.4084` |
-| Random PM overall score | `0.2504` |
-| Score delta vs random | `+0.1580` |
+| Random PM overall score | `0.2325` |
+| Score delta vs random | `+0.1759` |
 | Smoke-run reward start | `0.0193` |
 | Smoke-run reward end | `0.0275` |
 | Smoke-run reward delta | `+0.0082` |
@@ -123,7 +123,7 @@ research_risk_conflict   heuristic=0.4071
 regime_shift_recovery    heuristic=0.4211
 mandate_drift            heuristic=0.4591
 overall heuristic score  0.4084
-overall random score     0.2504
+overall random score     0.2325
 ```
 
 ## Why This Is Not A Toy Finance Simulator
@@ -192,6 +192,15 @@ Known failure modes:
 - Short smoke training can still bias toward near-term reward.
 
 Reward hacking is a known RL problem, and this environment does not claim to eliminate it. The benchmark is designed to expose these trade-offs through separate return, compliance, information-usage, and risk-response metrics.
+
+Anti-hack probe results:
+
+| Probe policy | Overall score | What it tries | Why it fails |
+| --- | ---: | --- | --- |
+| `always_cash` | `0.2000` | Avoid all drawdown and compliance risk | Capped for no investment or information usage |
+| `query_spam` | `0.2000` | Spend query budget instead of deciding | Capped for no portfolio action or risk response |
+| `concentrated_alpha` | `0.3033` | Chase return with maximum concentration | Loses all compliance credit |
+| `heuristic` | `0.4084` | Balance Research, Risk, and allocation | Uses information and accepts measured risk |
 
 ## Training Surface
 

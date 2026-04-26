@@ -134,7 +134,28 @@ TASK_GRADERS = {
 }
 
 
+def apply_reward_hacking_guardrails(metrics: EpisodeMetrics, score: float) -> float:
+    """Cap scores for common degenerate strategies.
+
+    These guardrails keep conservative no-op behavior from winning purely through
+    low drawdown/compliance, while still leaving the component metrics visible.
+    """
+
+    adjusted = score
+    if metrics.invested_ratio < 0.05 and metrics.information_usage < 0.02:
+        adjusted = min(adjusted, 0.20)
+    if metrics.compliance_score < 0.20:
+        adjusted = min(adjusted, 0.35)
+    if (
+        metrics.information_usage < 0.02
+        and metrics.risk_response < 0.02
+        and metrics.total_return <= 0.001
+    ):
+        adjusted = min(adjusted, 0.25)
+    return _clamp(adjusted)
+
+
 def grade_episode(metrics: EpisodeMetrics) -> float:
     """Score an episode on the hackathon's required 0.0–1.0 scale."""
 
-    return TASK_GRADERS[metrics.task_id](metrics)
+    return apply_reward_hacking_guardrails(metrics, TASK_GRADERS[metrics.task_id](metrics))

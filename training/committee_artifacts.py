@@ -190,8 +190,8 @@ def summarize_metric_progress(
         "end": values[-1],
         "best": max(values),
         "best_step": points[best_index]["step"],
-        "delta": values[-1] - values[0],
-        "best_delta": max(values) - values[0],
+        "delta": round(values[-1] - values[0], 10),
+        "best_delta": round(max(values) - values[0], 10),
         "num_points": len(values),
     }
 

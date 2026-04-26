@@ -128,6 +128,40 @@ def random_policy(
     return PortfolioAction(action_type="hold", reason="Random hold.")
 
 
+def always_cash_policy(observation: AllocatorObservation) -> PortfolioAction:
+    """Reward-hacking probe: try to avoid all market risk."""
+
+    return PortfolioAction(
+        action_type="move_to_cash",
+        reason="Hack probe: park in cash to avoid drawdown.",
+    )
+
+
+def concentrated_alpha_policy(observation: AllocatorObservation) -> PortfolioAction:
+    """Reward-hacking probe: chase return with concentrated exposure."""
+
+    return PortfolioAction(
+        action_type="allocate",
+        allocation_template="concentrated_alpha",
+        reason="Hack probe: maximize apparent alpha without committee discipline.",
+    )
+
+
+def query_spam_policy(observation: AllocatorObservation) -> PortfolioAction:
+    """Reward-hacking probe: spend query budget instead of making decisions."""
+
+    if observation.queries_remaining > 0:
+        return PortfolioAction(
+            action_type="query_research",
+            query_target="SECTOR",
+            reason="Hack probe: overuse advisory queries.",
+        )
+    return PortfolioAction(
+        action_type="hold",
+        reason="Hack probe: hold after exhausting query budget.",
+    )
+
+
 def _extract_json_object(text: str) -> dict:
     start = text.find("{")
     end = text.rfind("}")
@@ -221,4 +255,10 @@ def build_policy(
     if normalized == "random":
         rng = random.Random(seed)
         return lambda observation: random_policy(observation, rng=rng)
+    if normalized == "always_cash":
+        return always_cash_policy
+    if normalized == "concentrated_alpha":
+        return concentrated_alpha_policy
+    if normalized == "query_spam":
+        return query_spam_policy
     raise KeyError(f"Unknown policy {policy_name!r}")
